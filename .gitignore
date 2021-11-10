@@ -126,6 +126,7 @@ nb-configuration.xml
 /phpunit*.xml
 /.phpunit.*.cache
 
+config.php
 *.ico
 *.jpg
 *.jpeg
