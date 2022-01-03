@@ -7,6 +7,7 @@ use App\Utils\SDGConnectPDO;
 class WhatsappClassDAO extends BaseMethod
 {
     private $table = 'API_AUTH_WHATSAPP';
+    private $tableMessages = 'WHATSAPP_ANSWERS_MESSAGES';
 
     public function getTokenMacrobotWhatsapp()
     {
@@ -191,4 +192,33 @@ class WhatsappClassDAO extends BaseMethod
         $this->log->writeLog("$this->tx fin " . get_class() . " " . __FUNCTION__ . "\n");
         return $responseDecode;
     }
+
+    /**
+     * Guarda la respuesta
+     */
+    public function saveMessageWhastapp($body) {
+        
+        $this->log->writeLog("{$this->tx} Init " . __FUNCTION__ . "\n");
+        $sdgpdo = new SDGConnectPDO(USER_DB, PASS_DB, SCHEMA_DB, HOST_DB, PORT_DB);
+        $sdgpdo->setLog($this->log);
+        $sdgpdo->setTx($this->tx);
+        $createdAt = date("Y-m-d H:i:s");
+        
+        $query = "INSERT INTO `{$this->tableMessages}`
+        (`whatsappNumberClient`,`message`, `createdAt`)
+        VALUES  (:whatsappNumberClient,:messages, :createdAt) ;";
+
+        $sdgpdo->setQuery($query);
+        $sdgpdo->setParams([
+            ":whatsappNumberClient" => $body->whatsappNumber,
+            ":messages" => $body->message,
+            ":createdAt" => $createdAt
+        ]);
+        $newId = $sdgpdo->addRow();
+
+        $this->set('error', $sdgpdo->get('error'));
+        $this->set('errorDescription', $sdgpdo->get('errorDescription'));
+        return $newId;
+    }
+
 }

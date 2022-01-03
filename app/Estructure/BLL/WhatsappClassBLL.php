@@ -134,4 +134,56 @@ class WhatsappClassBLL extends BaseMethod
         $this->set('errorDescription', ERROR_DESC_SUCCESS);
         return TRUE;
     }
+
+
+    public function saveMessageWhastapp($body)
+    {
+        ini_set('log_errors', true);
+        ini_set('error_log', API_HOME_PATH . '/log/API_' . __CLASS__ . '_' . __FUNCTION__ . '-' . date('Ymd') . '.log');
+        $this->log = new DayLog(API_HOME_PATH, 'API_' . __CLASS__ . '_' . __FUNCTION__);
+        $this->tx = substr(uniqid(), 5);
+        $this->DAO->set('log', $this->log);
+        $this->DAO->set('tx',  $this->tx);
+
+        $this->camposRequired = [
+            'whatsappNumber'      => ['type' => 'string'],
+            'message'       => ['type' => 'string']
+        ];
+        $this->camposAvailables = array_keys($this->camposRequired);
+        // Valido campos request
+        $body = $this->validRequestFields($body);
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " Request: " . print_r($body, true) . "\n");
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " required: " . print_r($this->required, true) . "\n");
+        // Valido el request POST
+        $this->validMethodPOST($body, $this->required, $this->notAvailables, $this->fieldsNotVarType);
+        // Si la validación del request está OK
+        if ($this->get('error') === ERROR_CODE_SUCCESS) {
+            $this->validateWhatsappRequest($body);
+            if ($this->get('error') === ERROR_CODE_SUCCESS) {
+                // Enviando notificacion a Whatstapp
+                $this->log->writeLog("$this->tx Enviando notificacion a Whatstapp \n");
+                $this->DAO->saveMessageWhastapp($body);
+                if ($this->DAO->get('error') != ERROR_CODE_SUCCESS) {
+                    $this->set('error', $this->DAO->get('error'));
+                    $this->set('errorDescription', $this->DAO->get('errorDescription'));
+                } else {
+                    $this->set('error', ERROR_CODE_SUCCESS);
+                    $this->set('errorDescription', 'Mensaje recibido correctamente.');
+                }
+            }
+        }
+
+        $json = new \stdClass();
+        $json->status           = new \stdClass();
+        $json->status->code     = $this->get('error');
+        $json->status->message  = $this->get('errorDescription');
+
+        if ($this->get('error') === ERROR_CODE_SUCCESS && $this->get('data')) {
+            $json->data = $this->get('data');
+        }
+
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " Return: " . print_r(json_encode($json), true) . " \n");
+        $this->log->writeLog("$this->tx " . __CLASS__ . " " . __FUNCTION__ . " Fin \n\n");
+        return $json;
+    }
 }

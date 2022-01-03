@@ -33,7 +33,7 @@ $displayErrorDetails = true;
 
 $app = AppFactory::create();
 //$app->setBasePath('/v1');
-//$app->setBasePath('/whatsapp/res/v1');
+//$app->setBasePath('/whatsapp/rest/v1');
 
 $callableResolver = $app->getCallableResolver();
 $responseFactory = $app->getResponseFactory();
@@ -47,7 +47,7 @@ register_shutdown_function($shutdownHandler);
 
 
 // Carga el middleWare de autentización
-$app->add(AuthMiddleware::class);
+//$app->add(AuthMiddleware::class);
 
 // This middleware will append the response header Access-Control-Allow-Methods with all allowed methods
 $app->add(function (Request $request, RequestHandlerInterface $handler): Response {
@@ -107,7 +107,7 @@ $app->group('/whatsapp', function (RouteCollectorProxy $group) {
             ->write( json_encode($returnObject) );
         $newResponse = $response->withStatus( $returnObject->status->code );
         return $newResponse;
-    });
+    })->add(AuthMiddleware::class);
 
     $group->post('/message', function ($request, $response, array $args) {
         //$dataUser = $request->getAttribute('dataUser');
@@ -115,6 +115,25 @@ $app->group('/whatsapp', function (RouteCollectorProxy $group) {
         $body = (object)$request->getParsedBody();
         $class = new WhatsappClassBLL();
         $returnObject = $class->sendMessageWhastapp($body);
+        
+        $returnObject->links = new stdClass;
+        $httpProtocol = isset($_SERVER['HTTPS']) ? 'https://' : 'http://';
+        $urlSelf = $httpProtocol . $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'] ?? '';
+        $returnObject->links->self = $urlSelf;
+
+        $response
+            ->getBody()
+            ->write( json_encode($returnObject) );
+        $newResponse = $response->withStatus( $returnObject->status->code );
+        return $newResponse;
+    })->add(AuthMiddleware::class);
+
+    $group->post('/answer', function ($request, $response, array $args) {
+        //$dataUser = $request->getAttribute('dataUser');
+       
+        $body = (object)$request->getParsedBody();
+        $class = new WhatsappClassBLL();
+        $returnObject = $class->saveMessageWhastapp($body);
         
         $returnObject->links = new stdClass;
         $httpProtocol = isset($_SERVER['HTTPS']) ? 'https://' : 'http://';
