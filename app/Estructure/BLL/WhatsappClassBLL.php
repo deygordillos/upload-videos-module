@@ -123,7 +123,7 @@ class WhatsappClassBLL extends BaseMethod
      */
     private function validateWhatsappRequest($body)
     {        
-        if (isset($body->whatsappNumber) && !preg_match('/^[0-9]{11}$/', $body->whatsappNumber)) {
+        if (isset($body->whatsappNumber) && !preg_match('/^[0-9]{11,13}$/', $body->whatsappNumber)) {
             // Formato del fono inválido
             $this->set('error', ERROR_CODE_BAD_REQUEST);
             $this->set('errorDescription', "Formato de -whatsappNumber- debe ser [56123456789]");

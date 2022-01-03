@@ -133,7 +133,7 @@ class BaseMethod
                 } else {
 
                     $value = ($varType === 'string') 
-                        ? addslashes(trim($value)) 
+                        ? trim($value)
                         : ( ( $varType === 'integer' )
                             ? (int)$value 
                             : ( ($varType === 'double' ) 
