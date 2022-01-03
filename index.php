@@ -33,6 +33,7 @@ $displayErrorDetails = true;
 
 $app = AppFactory::create();
 //$app->setBasePath('/v1');
+//$app->setBasePath('/whatsapp/res/v1');
 
 $callableResolver = $app->getCallableResolver();
 $responseFactory = $app->getResponseFactory();
@@ -81,6 +82,13 @@ $errorMiddleware->setDefaultErrorHandler($errorHandler);
 // ------------------------------------
 //           Rutas
 // ------------------------------------
+
+$app->get('/test', function (Request $request, Response $response, $args) {
+    $response
+        ->getBody()
+        ->write( json_encode(['Testing' => 'OK']) );
+    return $response;
+});
 
 $app->group('/whatsapp', function (RouteCollectorProxy $group) {
     
