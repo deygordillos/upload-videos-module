@@ -166,6 +166,9 @@ class WhatsappClassBLL extends BaseMethod
                 if ($this->DAO->get('error') != ERROR_CODE_SUCCESS) {
                     $this->set('error', $this->DAO->get('error'));
                     $this->set('errorDescription', $this->DAO->get('errorDescription'));
+                    // Ejecuto agendamiento según respuesta del cliente en conversación abierta
+                    $this->DAO->execAgendamientoDFEEDByWhatsapp($body);
+
                 } else {
                     $this->set('error', ERROR_CODE_SUCCESS);
                     $this->set('errorDescription', 'Mensaje recibido correctamente.');

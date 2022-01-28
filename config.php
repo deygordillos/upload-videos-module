@@ -20,6 +20,7 @@ define('PREFIX_FONO_PAIS', 56);
 defined('USER_WHATSAPP_API')  OR define('USER_WHATSAPP_API', 'cristian.coccia@simpledatacorp.com'); // username user whastapp
 defined('PASS_WHATSAPP_API')  OR define('PASS_WHATSAPP_API', "#sqn2'UB)nT;?AwZ"); // clave user whatsapp
 defined('URL_WHATSAPP_API')  OR define('URL_WHATSAPP_API', 'https://macrobots.app/api/v1/'); // endpoint whatsapp
+defined('URL_DFEED')  OR define('URL_DFEED', 'http://in-cldfeeddev01/dfeed/soap/cl/v0.00.dev/TDC.php'); // endpoint soap dfeed
 
 /**
  * Credenciales de acceso a la base de datos.
