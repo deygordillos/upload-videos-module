@@ -262,4 +262,46 @@ class WhatsappClassDAO extends BaseMethod
         }
         $this->log->writeLog("{$this->tx} End " . __FUNCTION__ . "\n");
     }
+
+    public function execAgendamientoDFEEDByWhatsappProduction($body) {
+        $this->log->writeLog("{$this->tx} Init " . __FUNCTION__ . "\n");
+        try {
+            $endpoint = URL_DFEED_PROD;
+            $operation = "selectSchedulerByWhatsaap";
+
+            $curl = "curl -X POST {$endpoint} \
+            -H 'Content-Type: text/xml;charset=\"utf-8\"' \
+            -H 'Accept: text/xml' \
+            -H 'Cache-Control: no-cache' \
+            -H 'SOAPAction: \"urn:Demo#OutputRequest\"' \
+            -d '<soapenv:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:urn=\"urn:Demo\"> \
+                <soapenv:Header/> \
+                <soapenv:Body> \
+                    <urn:OutputRequest soapenv:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"> \
+                        <OperationRequest xsi:type=\"urn:OperationRequest\" xmlns:urn=\"urn:Configurationwsdl\"> \
+                            <Header xsi:type=\"urn:HeaderRequest\"> \
+                                <Operation xsi:type=\"xsd:string\">{$operation}</Operation> \
+                            </Header> \
+                            <Data xsi:type=\"urn:DataRequest\"> \
+                                <Property xsi:type=\"urn:Property\"> \
+                                    <Name xsi:type=\"xsd:string\">customerPhone</Name> \
+                                    <Value xsi:type=\"xsd:string\">".$body->whatsappNumber."</Value> \
+                                </Property> \
+                                <Property xsi:type=\"urn:Property\"> \
+                                    <Name xsi:type=\"xsd:string\">selectedCont</Name> \
+                                    <Value xsi:type=\"xsd:string\">".trim($body->message)."</Value> \
+                                </Property> \
+                            </Data> \
+                        </OperationRequest> \
+                    </urn:OutputRequest> \
+                </soapenv:Body> \
+                </soapenv:Envelope>' ";
+
+            $this->log->writeLog("$this->tx curl: " . print_r($curl, true) . " \n");
+            exec($curl . " > /dev/null 2>&1 &");
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+        $this->log->writeLog("{$this->tx} End " . __FUNCTION__ . "\n");
+    }
 }

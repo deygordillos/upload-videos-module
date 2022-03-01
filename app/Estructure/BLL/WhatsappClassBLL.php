@@ -170,6 +170,9 @@ class WhatsappClassBLL extends BaseMethod
                     // Ejecuto agendamiento según respuesta del cliente en conversación abierta
                     $this->DAO->execAgendamientoDFEEDByWhatsapp($body);
 
+                    // A producción
+                    $this->DAO->execAgendamientoDFEEDByWhatsappProduction($body);
+
                     $this->set('error', ERROR_CODE_SUCCESS);
                     $this->set('errorDescription', 'Mensaje recibido correctamente.');
                 }
