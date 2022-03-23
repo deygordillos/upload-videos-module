@@ -80,7 +80,9 @@ class WhatsappClassBLL extends BaseMethod
             'whatsappNumber'      => ['type' => 'integer'],
             'messageToSend'       => ['type' => 'string']
         ];
-        $this->camposAvailables = array_keys($this->camposRequired);
+        $this->camposAvailables   = array_keys($this->camposRequired);
+        $this->camposAvailables[] = 'wsBy';
+        
         // Valido campos request
         $body = $this->validRequestFields($body);
         $this->log->writeLog("$this->tx " . __FUNCTION__ . " Request: " . print_r($body, true) . "\n");

@@ -139,6 +139,15 @@ class WhatsappClassDAO extends BaseMethod
 
         $token = $this->getTokenWhatsapp();
         $url =  URL_WHATSAPP_API . 'messages';
+        
+        $wsBy          = $body->wsBy ?? '';
+        if ($wsBy == 'sdc') {
+            $this->log->writeLog("$this->tx " . __FUNCTION__ . " Envío mensaje por WhatsappSDC \n");
+            $url =  URL_WHATSAPP_API_SDC . 'send';
+        }else if ($wsBy == 'sdc_bci') {
+            $this->log->writeLog("$this->tx " . __FUNCTION__ . " Envío mensaje por WhatsappSDC para BCI \n");
+            $url =  URL_WHATSAPP_API_BCI . 'send';
+        }
         $this->log->writeLog("$this->tx " . __FUNCTION__ . " " . $url . " \n");
         $this->log->writeLog("$this->tx " . __FUNCTION__ . " token: " . print_r($token, true) . " \n");
         $postVars = json_encode($request);
