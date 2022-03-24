@@ -141,6 +141,9 @@ class WhatsappClassDAO extends BaseMethod
         $url =  URL_WHATSAPP_API . 'messages';
         
         $wsBy          = $body->wsBy ?? '';
+        if(empty($wsBy)) {
+            $wsBy = 'sdc';
+        }
         if ($wsBy == 'sdc') {
             $this->log->writeLog("$this->tx " . __FUNCTION__ . " Envío mensaje por WhatsappSDC \n");
             $url =  URL_WHATSAPP_API_SDC . 'send';
@@ -149,7 +152,7 @@ class WhatsappClassDAO extends BaseMethod
             $url =  URL_WHATSAPP_API_BCI . 'send';
         }
         $this->log->writeLog("$this->tx " . __FUNCTION__ . " " . $url . " \n");
-        $this->log->writeLog("$this->tx " . __FUNCTION__ . " token: " . print_r($token, true) . " \n");
+        //$this->log->writeLog("$this->tx " . __FUNCTION__ . " token: " . print_r($token, true) . " \n");
         $postVars = json_encode($request);
         $this->log->writeLog("$this->tx " . __FUNCTION__ . " postVars: " . print_r($postVars, true) . " \n");
         curl_setopt_array($ch, array(
@@ -157,7 +160,7 @@ class WhatsappClassDAO extends BaseMethod
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => "",
             CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 10,
+            CURLOPT_TIMEOUT => 60,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => "POST",
