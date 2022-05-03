@@ -3,10 +3,12 @@ namespace App\Estructure\DAO;
 
 use App\Estructure\BLL\BaseMethod;
 use App\Utils\SDGConnectPDO;
+use stdClass;
 
 class WhatsappClassDAO extends BaseMethod
 {
     private $table = 'API_AUTH_WHATSAPP';
+    private $tableBM = 'API_BOTMAKER';
     private $tableMessages = 'WHATSAPP_ANSWERS_MESSAGES';
 
     public function getTokenMacrobotWhatsapp()
@@ -128,6 +130,26 @@ class WhatsappClassDAO extends BaseMethod
         return $data['token'] ?? '';
     }
 
+    /**
+     * Obtiene access token bearer actual de botMaker
+     */
+    public function getTokenWhatsappBotMaker() {
+        $sdgpdo = new SDGConnectPDO(USER_DB, PASS_DB, SCHEMA_DB, HOST_DB, PORT_DB);
+        $sdgpdo->setLog($this->log);
+        $sdgpdo->setTx($this->tx);
+        $sdgpdo->setQuery("SELECT accessToken 
+        FROM {$this->tableBM} apibm
+        WHERE apibm.statusToken = :currentStatus 
+        LIMIT 1;");
+        $sdgpdo->setParams([
+            ":currentStatus" => '1'
+        ]);
+        $data = $sdgpdo->getRow();
+        $this->set('error', $sdgpdo->get('error') );
+        $this->set('errorDescription', $sdgpdo->get('errorDescription') );
+        return $data['accessToken'] ?? '';
+    }
+
     
     public function sendMessageWhastapp($body)
     {
@@ -139,7 +161,7 @@ class WhatsappClassDAO extends BaseMethod
 
         $token = $this->getTokenWhatsapp();
         $url =  URL_WHATSAPP_API . 'messages';
-        
+        $authHeader = 'Bearer ' . $token;
         $wsBy          = $body->wsBy ?? '';
         if(empty($wsBy)) {
             $wsBy = 'sdc';
@@ -150,11 +172,28 @@ class WhatsappClassDAO extends BaseMethod
         }else if ($wsBy == 'sdc_bci') {
             $this->log->writeLog("$this->tx " . __FUNCTION__ . " Envío mensaje por WhatsappSDC para BCI \n");
             $url =  URL_WHATSAPP_API_BCI . 'send';
+        }else if ($wsBy == 'sdc_stream_cl') {
+            $this->log->writeLog("$this->tx " . __FUNCTION__ . " Envío mensaje por WhatsappSDC para Chile Streaming y mensaje inmediato \n");
+            $url =  URL_WHATSAPP_API_STREAMING_CL . 'send';
+        }else if ($wsBy == 'sdc_peru') {
+            $this->log->writeLog("$this->tx " . __FUNCTION__ . " Envío mensaje por WhatsappSDC para Peru \n");
+            $url =  URL_WHATSAPP_API_PERU . 'send';
+            $url = 'http://200.10.111.77:15672/api/exchanges/%2Fwha/whatsappin.peru.envio.request/publish';
+            $request = new stdClass;
+            $request->properties = new stdClass;
+            $request->properties->content_type = 'application/json';
+            $request->properties->reply_to = 'reply-to';
+            $request->routing_key = '10.100.20.241';
+            $request->payload = new stdClass;
+            $request->payload->to   = (int)$body->whatsappNumber ?? '';
+            $request->payload->body = (string)$body->messageToSend ?? '';
+            $request->payload = json_encode($request->payload);
+            $request->payload_encoding = 'string';
+            $authHeader = 'Basic YWRtaW46anU3eWh0ZzV0cnQ=';
         }
         $this->log->writeLog("$this->tx " . __FUNCTION__ . " " . $url . " \n");
-        //$this->log->writeLog("$this->tx " . __FUNCTION__ . " token: " . print_r($token, true) . " \n");
         $postVars = json_encode($request);
-        $this->log->writeLog("$this->tx " . __FUNCTION__ . " postVars: " . print_r($postVars, true) . " \n");
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " postVars: " . print_r(str_replace('\/','/', $postVars), true) . " \n");
         curl_setopt_array($ch, array(
             CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
@@ -166,7 +205,7 @@ class WhatsappClassDAO extends BaseMethod
             CURLOPT_CUSTOMREQUEST => "POST",
             CURLOPT_POSTFIELDS => $postVars,
             CURLOPT_HTTPHEADER => array(
-                "Authorization: Bearer " . $token,
+                "Authorization: " . $authHeader,
                 "Content-Type: application/json"
             ),
         ));
@@ -189,10 +228,10 @@ class WhatsappClassDAO extends BaseMethod
                     $this->set('errorDescription', ERROR_DESC_SUCCESS);
                 } elseif ((int)$http_status === 500) {
                     $this->set('error', ERROR_CODE_INTERNAL_SERVER);
-                    $this->set('errorDescription', $responseDecode->status);
+                    $this->set('errorDescription', $responseDecode->Description ?? '');
                 } else {
                     $this->set('error', $http_status);
-                    $this->set('errorDescription', $responseDecode->msg);
+                    $this->set('errorDescription', $responseDecode->Description ?? '');
                 }
             } else {
                 $this->set('error', ERROR_CODE_INTERNAL_SERVER);
@@ -315,5 +354,141 @@ class WhatsappClassDAO extends BaseMethod
             //throw $th;
         }
         $this->log->writeLog("{$this->tx} End " . __FUNCTION__ . "\n");
+    }
+
+    public function sendMessageWhastappSDC($body)
+    {
+
+        $ch = curl_init();
+        $request = new \stdClass();
+        $request->to   = (string)$body->whatsappNumber ?? '';
+        $request->body = $body->messageToSend ?? '';
+
+        $token = $this->getTokenWhatsapp();
+        $url =  URL_WHATSAPP_API_SDC . 'send';
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " " . $url . " \n");
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " token: " . print_r($token, true) . " \n");
+        $postVars = json_encode($request);
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " postVars: " . print_r($postVars, true) . " \n");
+        curl_setopt_array($ch, array(
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_POSTFIELDS => $postVars,
+            CURLOPT_HTTPHEADER => array(
+                "Authorization: Bearer " . $token,
+                "Content-Type: application/json"
+            ),
+        ));
+
+        $response = curl_exec($ch);        
+        $errno = curl_errno($ch);
+        $error = curl_error($ch);
+        $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $this->log->writeLog("$this->tx response($http_status): " . print_r($response, true) . " \n");
+        curl_close($ch);
+        $responseDecode = null;
+        if ($errno) {
+            $this->set('error', $errno);
+            $this->set('errorDescription', $error);
+        } else {
+            $responseDecode = json_decode($response);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                if ((int)$http_status === 200) {
+                    $this->set('error', ERROR_CODE_SUCCESS);
+                    $this->set('errorDescription', ERROR_DESC_SUCCESS);
+                } elseif ((int)$http_status === 500) {
+                    $this->set('error', ERROR_CODE_INTERNAL_SERVER);
+                    $this->set('errorDescription', $responseDecode->status);
+                } else {
+                    $this->set('error', $http_status);
+                    $this->set('errorDescription', $responseDecode->msg);
+                }
+            } else {
+                $this->set('error', ERROR_CODE_INTERNAL_SERVER);
+                $this->set('errorDescription', 'Formato no esperado');
+            }
+            
+        }
+
+        $this->log->writeLog("$this->tx fin " . get_class() . " " . __FUNCTION__ . "\n");
+        return $responseDecode;
+    }
+
+    public function sendTemplateMessageBotMaker($body)
+    {
+        $request = new \stdClass();
+        $request->chatPlatform   = 'whatsapp';
+        $request->chatChannelNumber = PHONE_BOTMAKER_FROM;
+        $request->platformContactId = $body->customerPhone ?? '';
+        $request->ruleNameOrId      = $body->templateBM ?? '';
+        $request->params = new \stdClass();
+        $request->params->customerName    = $body->customerName ?? '';
+        $request->params->customerAddress = $body->customerAddress ?? '';
+        $request->params->schedule1       = $body->schedule1 ?? '';
+        $request->params->schedule2       = $body->schedule2 ?? '';
+        $request->params->dateScheduled      = $body->dateScheduled ?? '';
+        $request->params->timeIniScheduled   = $body->timeIniScheduled ?? '';
+        $request->params->timeEndScheduled   = $body->timeEndScheduled ?? '';
+        $request->params->timeArrival        = $body->timeArrival ?? '';
+
+        $accessToken = $this->getTokenWhatsappBotMaker();
+        $url =  URL_API_BOTMAKER . '/intent/v2';
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " " . $url . " \n");
+        $postVars = json_encode($request);
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " accessToken: " . print_r($accessToken, true) . " \n");
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " postVars: " . print_r($postVars, true) . " \n");
+        $ch = curl_init();
+        curl_setopt_array($ch, array(
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => $postVars,
+            CURLOPT_HTTPHEADER => array(
+                "access-token: " . trim($accessToken),
+                "Content-Type: application/json",
+                "Accept: application/json"
+            ),
+        ));
+
+        $response = curl_exec($ch);        
+        $errno = curl_errno($ch);
+        $error = curl_error($ch);
+        $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $this->log->writeLog("$this->tx response($http_status): " . print_r($response, true) . " \n");
+        curl_close($ch);
+        $responseDecode = [];
+        if ($errno) {
+            $this->set('error', $errno);
+            $this->set('errorDescription', $error);
+        } else {
+            $responseDecode = json_decode($response);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                if ((int)$http_status === 200) {
+                    $this->set('error', ERROR_CODE_SUCCESS);
+                    $this->set('errorDescription', ERROR_DESC_SUCCESS);
+                } else {
+                    $this->set('error', $http_status);
+                    $this->set('errorDescription', 'Mensaje no pudo ser entregado');
+                }
+            } else {
+                $this->set('error', ERROR_CODE_INTERNAL_SERVER);
+                $this->set('errorDescription', 'Formato no esperado');
+            }
+            
+        }
+
+        $this->log->writeLog("$this->tx fin " . get_class() . " " . __FUNCTION__ . "\n");
+        return $responseDecode;
     }
 }

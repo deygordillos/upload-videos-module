@@ -22,8 +22,12 @@ defined('PASS_WHATSAPP_API')  OR define('PASS_WHATSAPP_API', "#sqn2'UB)nT;?AwZ")
 defined('URL_WHATSAPP_API')  OR define('URL_WHATSAPP_API', 'https://macrobots.app/api/v1/'); // endpoint whatsapp
 defined('URL_WHATSAPP_API_SDC')  OR define('URL_WHATSAPP_API_SDC', 'http://10.100.20.240:80/whatsapp/'); // endpoint whatsapp
 defined('URL_WHATSAPP_API_BCI')  OR define('URL_WHATSAPP_API_BCI', 'http://10.100.20.240:8081/whatsapp/'); // endpoint whatsapp BCI
+defined('URL_WHATSAPP_API_STREAMING_CL')  OR define('URL_WHATSAPP_API_STREAMING_CL', 'http://10.100.20.241:8081/whatsapp/'); // endpoint whatsapp BCI
+defined('URL_WHATSAPP_API_PERU')  OR define('URL_WHATSAPP_API_PERU', 'http://10.100.20.241:8083/whatsapp/'); // endpoint whatsapp BCI
 defined('URL_DFEED')  OR define('URL_DFEED', 'https://dfeed-cl-qa-ws.simpledatacorp.com/TDC.php'); // endpoint soap dfeed qas
 defined('URL_DFEED_PRD')  OR define('URL_DFEED_PROD', 'http://in-dfeedprdapp/dfeed/soap/cl/v0.00/TDC.php'); // endpoint soap dfeed prod
+defined('URL_API_BOTMAKER')  OR define('URL_API_BOTMAKER', 'https://go.botmaker.com/api/v1.0'); // endpoint api botmaker
+defined('PHONE_BOTMAKER_FROM')  OR define('PHONE_BOTMAKER_FROM', '56937521154'); // numero telefono desde
 
 /**
  * Credenciales de acceso a la base de datos.

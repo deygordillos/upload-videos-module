@@ -5,6 +5,7 @@ namespace App\Estructure\BLL;
 use App\Estructure\BLL\BaseMethod;
 use App\Estructure\DAO\WhatsappClassDAO;
 use App\Utils\DayLog;
+use stdClass;
 
 class WhatsappClassBLL extends BaseMethod
 {
@@ -181,6 +182,105 @@ class WhatsappClassBLL extends BaseMethod
             }
         }
 
+        $json = new \stdClass();
+        $json->status           = new \stdClass();
+        $json->status->code     = $this->get('error');
+        $json->status->message  = $this->get('errorDescription');
+
+        if ($this->get('error') === ERROR_CODE_SUCCESS && $this->get('data')) {
+            $json->data = $this->get('data');
+        }
+
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " Return: " . print_r(json_encode($json), true) . " \n");
+        $this->log->writeLog("$this->tx " . __CLASS__ . " " . __FUNCTION__ . " Fin \n\n");
+        return $json;
+    }
+
+    public function sendTemplateSelfSchedule($body)
+    {
+        ini_set('log_errors', true);
+        ini_set('error_log', API_HOME_PATH . '/log/API_' . __FUNCTION__ . '-' . date('Ymd') . '.log');
+        $this->log = new DayLog(API_HOME_PATH, 'API_' . __FUNCTION__);
+        $this->tx = substr(uniqid(), 5);
+        $this->DAO->set('log', $this->log);
+        $this->DAO->set('tx',  $this->tx);
+
+        $this->camposRequired = [
+            'customerPhone'    => ['type' => 'string'],
+            'templateBM'       => ['type' => 'string']
+        ];
+        $this->camposAvailables = array_keys($this->camposRequired);
+        $this->camposAvailables[] = 'customerName';
+        $this->camposAvailables[] = 'customerAddress';
+        $this->camposAvailables[] = 'schedule1';
+        $this->camposAvailables[] = 'schedule2';
+        $this->camposAvailables[] = 'dateScheduled';
+        $this->camposAvailables[] = 'timeIniScheduled';
+        $this->camposAvailables[] = 'timeEndScheduled';
+        $this->camposAvailables[] = 'timeArrival';
+
+        // Valido campos request
+        $body = $this->validRequestFields($body);
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " Request: " . print_r($body, true) . "\n");
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " required: " . print_r($this->required, true) . "\n");
+        // Valido el request POST
+        $this->validMethodPOST($body, $this->required, $this->notAvailables, $this->fieldsNotVarType);
+        // Si la validación del request está OK
+        if ($this->get('error') === ERROR_CODE_SUCCESS) {
+            // Enviando notificacion a Whatstapp
+            $this->log->writeLog("$this->tx Enviando template \n");
+            /**
+             * send template message
+             */
+            $this->DAO->sendTemplateMessageBotMaker($body);
+            if ($this->DAO->get('error') != ERROR_CODE_SUCCESS) {
+                $this->set('error', $this->DAO->get('error'));
+                $this->set('errorDescription', $this->DAO->get('errorDescription'));
+            } else {
+                $this->set('error', ERROR_CODE_SUCCESS);
+                $this->set('errorDescription', 'Mensaje enviado correctamente.');
+            }
+        }
+
+        $json = new \stdClass();
+        $json->status           = new \stdClass();
+        $json->status->code     = $this->get('error');
+        $json->status->message  = $this->get('errorDescription');
+
+        if ($this->get('error') === ERROR_CODE_SUCCESS && $this->get('data')) {
+            $json->data = $this->get('data');
+        }
+
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " Return: " . print_r(json_encode($json), true) . " \n");
+        $this->log->writeLog("$this->tx " . __CLASS__ . " " . __FUNCTION__ . " Fin \n\n");
+        return $json;
+    }
+
+    public function botMakerIncome($header,$body)
+    {
+        ini_set('log_errors', true);
+        ini_set('error_log', API_HOME_PATH . '/log/API__' . __FUNCTION__ . '-' . date('Ymd') . '.log');
+        $this->log = new DayLog(API_HOME_PATH, 'API__' . __FUNCTION__);
+        $this->tx = substr(uniqid(), 5);
+        $this->DAO->set('log', $this->log);
+        $this->DAO->set('tx',  $this->tx);
+
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " Header: " . print_r($header, true) . "\n");
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " Request: " . print_r($body, true) . "\n");
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " required: " . print_r($this->required, true) . "\n");
+        
+        if (isset($body->contactId) && isset($body->messages[0]['payload'])) {
+            $newBody = new stdClass;
+            $newBody->whatsappNumber = (string)$body->contactId;
+            $newBody->message        = (string)$body->messages[0]['payload'];
+            $this->saveMessageWhastapp($newBody);
+            $this->set('error', ERROR_CODE_SUCCESS);
+            $this->set('errorDescription', 'Mensaje recibido correctamente.');
+        } else {
+            $this->log->writeLog("$this->tx " . __FUNCTION__ . " No obtuvimos respuesta esperada. \n");
+            $this->set('error', ERROR_CODE_SUCCESS);
+            $this->set('errorDescription', 'No obtuvimos respuesta esperada.');
+        }
         $json = new \stdClass();
         $json->status           = new \stdClass();
         $json->status->code     = $this->get('error');
