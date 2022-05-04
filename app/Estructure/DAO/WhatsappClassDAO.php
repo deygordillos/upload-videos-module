@@ -190,6 +190,21 @@ class WhatsappClassDAO extends BaseMethod
             $request->payload = json_encode($request->payload);
             $request->payload_encoding = 'string';
             $authHeader = 'Basic YWRtaW46anU3eWh0ZzV0cnQ=';
+        } else if ($wsBy == 'sdc_sdc') {
+            $this->log->writeLog("$this->tx " . __FUNCTION__ . " Envío mensaje por WhatsappSDC desde SDC Global \n");
+            $url =  URL_WHATSAPP_API_SDC_GLOBAL . 'send';
+            //$url = 'http://200.10.111.77:15672/api/exchanges/%2Fwha/whatsappin.sdc.envio.request/publish';
+            ////$request = new stdClass;
+            $request->properties = new stdClass;
+            //$request->properties->content_type = 'application/json';
+            //$request->properties->reply_to = 'reply-to';
+            //$request->routing_key = '10.100.20.241';
+            //$request->payload = new stdClass;
+            //$request->payload->to   = (int)$body->whatsappNumber ?? '';
+            //$request->payload->body = (string)$body->messageToSend ?? '';
+            //$request->payload = json_encode($request->payload);
+            //$request->payload_encoding = 'string';
+            //$authHeader = 'Basic YWRtaW46anU3eWh0ZzV0cnQ=';
         }
         $this->log->writeLog("$this->tx " . __FUNCTION__ . " " . $url . " \n");
         $postVars = json_encode($request);
