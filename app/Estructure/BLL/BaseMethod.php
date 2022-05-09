@@ -23,7 +23,7 @@ class BaseMethod
 
     public function get($name)
     {
-        return $this->$name;
+        return $this->$name ?? '';
     }
 
     protected function getToken()
@@ -140,7 +140,7 @@ class BaseMethod
                                 ? round( (float)$value, 8, PHP_ROUND_HALF_UP)
                                 : $value ) );
 
-                    if ( empty( $value ) ) {
+                    if ( $value == "" || strlen($value) == 0 ) {
                         $this->required[] = $property;
                     } else {
                         $body->{$property} = $value;

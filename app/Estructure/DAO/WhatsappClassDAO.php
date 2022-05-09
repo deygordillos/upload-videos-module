@@ -194,7 +194,7 @@ class WhatsappClassDAO extends BaseMethod
             $this->log->writeLog("$this->tx " . __FUNCTION__ . " Envío mensaje por WhatsappSDC desde SDC Global \n");
             $url =  URL_WHATSAPP_API_SDC_GLOBAL . 'send';
             //$url = 'http://200.10.111.77:15672/api/exchanges/%2Fwha/whatsappin.sdc.envio.request/publish';
-            ////$request = new stdClass;
+            //$request = new stdClass;
             $request->properties = new stdClass;
             //$request->properties->content_type = 'application/json';
             //$request->properties->reply_to = 'reply-to';
@@ -451,6 +451,9 @@ class WhatsappClassDAO extends BaseMethod
         $request->params->timeIniScheduled   = $body->timeIniScheduled ?? '';
         $request->params->timeEndScheduled   = $body->timeEndScheduled ?? '';
         $request->params->timeArrival        = $body->timeArrival ?? '';
+        $request->params->infoActionElements = $body->infoActionElements ?? '';
+        $request->params->customerAddressPrincipal = $body->customerAddressPrincipal ?? '';
+        $request->params->customerAddressComercial = $body->customerAddressComercial ?? '';
 
         $accessToken = $this->getTokenWhatsappBotMaker();
         $url =  URL_API_BOTMAKER . '/intent/v2';
@@ -464,7 +467,7 @@ class WhatsappClassDAO extends BaseMethod
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 10,
+            CURLOPT_TIMEOUT => 15,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',

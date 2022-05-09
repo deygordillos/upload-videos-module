@@ -218,6 +218,9 @@ class WhatsappClassBLL extends BaseMethod
         $this->camposAvailables[] = 'timeIniScheduled';
         $this->camposAvailables[] = 'timeEndScheduled';
         $this->camposAvailables[] = 'timeArrival';
+        $this->camposAvailables[] = 'infoActionElements';
+        $this->camposAvailables[] = 'customerAddressPrincipal';
+        $this->camposAvailables[] = 'customerAddressComercial';
 
         // Valido campos request
         $body = $this->validRequestFields($body);
