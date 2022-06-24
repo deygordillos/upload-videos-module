@@ -279,6 +279,13 @@ class WhatsappClassBLL extends BaseMethod
             $this->saveMessageWhastapp($newBody);
             $this->set('error', ERROR_CODE_SUCCESS);
             $this->set('errorDescription', 'Mensaje recibido correctamente.');
+        }elseif (isset($body->contactId) && isset($body->messages[0]['message']) && !empty($body->messages[0]['message'])) {
+            $newBody = new stdClass;
+            $newBody->whatsappNumber = (string)$body->contactId;
+            $newBody->message        = (string)$body->messages[0]['message'];
+            $this->saveMessageWhastapp($newBody);
+            $this->set('error', ERROR_CODE_SUCCESS);
+            $this->set('errorDescription', 'Mensaje recibido correctamente.');
         } else {
             $this->log->writeLog("$this->tx " . __FUNCTION__ . " No obtuvimos respuesta esperada. \n");
             $this->set('error', ERROR_CODE_SUCCESS);

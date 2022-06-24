@@ -20,9 +20,9 @@ define('PREFIX_FONO_PAIS', 56);
 defined('USER_WHATSAPP_API')  OR define('USER_WHATSAPP_API', 'cristian.coccia@simpledatacorp.com'); // username user whastapp
 defined('PASS_WHATSAPP_API')  OR define('PASS_WHATSAPP_API', "#sqn2'UB)nT;?AwZ"); // clave user whatsapp
 defined('URL_WHATSAPP_API')  OR define('URL_WHATSAPP_API', 'https://macrobots.app/api/v1/'); // endpoint whatsapp
-defined('URL_WHATSAPP_API_SDC')  OR define('URL_WHATSAPP_API_SDC', 'http://10.100.20.240:80/whatsapp/'); // endpoint whatsapp
+defined('URL_WHATSAPP_API_SDC')  OR define('URL_WHATSAPP_API_SDC', 'http://10.100.20.240:8082/whatsapp/'); // endpoint whatsapp
 defined('URL_WHATSAPP_API_BCI')  OR define('URL_WHATSAPP_API_BCI', 'http://10.100.20.240:8081/whatsapp/'); // endpoint whatsapp BCI
-defined('URL_WHATSAPP_API_STREAMING_CL')  OR define('URL_WHATSAPP_API_STREAMING_CL', 'http://10.100.20.241:8081/whatsapp/'); // endpoint whatsapp BCI
+defined('URL_WHATSAPP_API_STREAMING_CL')  OR define('URL_WHATSAPP_API_STREAMING_CL', 'http://10.100.20.240:8081/whatsapp/'); // endpoint whatsapp BCI
 defined('URL_WHATSAPP_API_PERU')  OR define('URL_WHATSAPP_API_PERU', 'http://10.100.20.241:8083/whatsapp/'); // endpoint whatsapp BCI
 defined('URL_WHATSAPP_API_SDC_GLOBAL')  OR define('URL_WHATSAPP_API_SDC_GLOBAL', 'http://10.100.20.241:8082/whatsapp/'); // endpoint whatsapp sdc global
 defined('URL_DFEED')  OR define('URL_DFEED', 'https://dfeed-cl-qa-ws.simpledatacorp.com/TDC.php'); // endpoint soap dfeed qas
