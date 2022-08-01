@@ -175,21 +175,40 @@ class WhatsappClassDAO extends BaseMethod
         }else if ($wsBy == 'sdc_stream_cl') {
             $this->log->writeLog("$this->tx " . __FUNCTION__ . " Envío mensaje por WhatsappSDC para Chile Streaming y mensaje inmediato \n");
             $url =  URL_WHATSAPP_API_STREAMING_CL . 'send';
+        }else if ($wsBy == 'sdc_test') {
+            $this->log->writeLog("$this->tx " . __FUNCTION__ . " Envío mensaje para test\n");
+            $url =  URL_WHATSAPP_API_TEST . 'send';
+            //$url = 'http://200.10.111.77:15672/api/exchanges/%2Fwha/whatsappin.dev.envio.request/publish';
+            //$request = new stdClass;
+            //$request->properties = new stdClass;
+            //$request->properties->content_type = 'application/json';
+            //$request->properties->reply_to = 'reply-to';
+            //$request->routing_key = '10.100.20.240';
+            //$request->payload = new stdClass;
+            //$request->payload->to   = (int)$body->whatsappNumber ?? '';
+            //$request->payload->body = (string)$body->messageToSend ?? '';
+            //$request->payload = json_encode($request->payload);
+            //$request->payload_encoding = 'string';
+            //$authHeader = 'Basic YWRtaW46anU3eWh0ZzV0cnQ=';
+        }
+        else if ($wsBy == 'sdc_dfeed_autoag') {
+            $this->log->writeLog("$this->tx " . __FUNCTION__ . " Envío mensaje para dfeed autoagendamiento\n");
+            $url =  URL_WHATSAPP_API_DFEED_AUTOAG . 'send';
         }else if ($wsBy == 'sdc_peru') {
             $this->log->writeLog("$this->tx " . __FUNCTION__ . " Envío mensaje por WhatsappSDC para Peru \n");
             $url =  URL_WHATSAPP_API_PERU . 'send';
-            $url = 'http://200.10.111.77:15672/api/exchanges/%2Fwha/whatsappin.peru.envio.request/publish';
-            $request = new stdClass;
-            $request->properties = new stdClass;
-            $request->properties->content_type = 'application/json';
-            $request->properties->reply_to = 'reply-to';
-            $request->routing_key = '10.100.20.241';
-            $request->payload = new stdClass;
-            $request->payload->to   = (int)$body->whatsappNumber ?? '';
-            $request->payload->body = (string)$body->messageToSend ?? '';
-            $request->payload = json_encode($request->payload);
-            $request->payload_encoding = 'string';
-            $authHeader = 'Basic YWRtaW46anU3eWh0ZzV0cnQ=';
+            //$url = 'http://200.10.111.77:15672/api/exchanges/%2Fwha/whatsappin.peru.envio.request/publish';
+            //$request = new stdClass;
+            //$request->properties = new stdClass;
+            //$request->properties->content_type = 'application/json';
+            //$request->properties->reply_to = 'reply-to';
+            //$request->routing_key = '10.100.20.241';
+            //$request->payload = new stdClass;
+            //$request->payload->to   = (int)$body->whatsappNumber ?? '';
+            //$request->payload->body = (string)$body->messageToSend ?? '';
+            //$request->payload = json_encode($request->payload);
+            //$request->payload_encoding = 'string';
+            //$authHeader = 'Basic YWRtaW46anU3eWh0ZzV0cnQ=';
         } else if ($wsBy == 'sdc_sdc') {
             $this->log->writeLog("$this->tx " . __FUNCTION__ . " Envío mensaje por WhatsappSDC desde SDC Global \n");
             $url =  URL_WHATSAPP_API_SDC_GLOBAL . 'send';
