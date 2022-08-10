@@ -258,8 +258,14 @@ class WhatsappClassDAO extends BaseMethod
             $responseDecode = json_decode($response);
             if (json_last_error() === JSON_ERROR_NONE) {
                 if ((int)$http_status === 200) {
-                    $this->set('error', ERROR_CODE_SUCCESS);
-                    $this->set('errorDescription', ERROR_DESC_SUCCESS);
+                    $codeResponde = $responseDecode->Code ?? '';
+                    if ((int)$codeResponde != 200) {
+                        $codeResponde = ERROR_CODE_INTERNAL_SERVER;
+                    } else{
+                        $codeResponde = (int)$http_status;
+                    }
+                    $this->set('error', $codeResponde);
+                    $this->set('errorDescription', $responseDecode->Description ?? '');
                 } elseif ((int)$http_status === 500) {
                     $this->set('error', ERROR_CODE_INTERNAL_SERVER);
                     $this->set('errorDescription', $responseDecode->Description ?? '');
