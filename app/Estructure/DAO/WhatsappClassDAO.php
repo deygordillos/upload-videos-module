@@ -252,7 +252,8 @@ class WhatsappClassDAO extends BaseMethod
         curl_close($ch);
         $responseDecode = null;
         if ($errno) {
-            $this->set('error', $errno);
+            $this->log->writeLog("$this->tx error($errno): " . print_r($error, true) . " \n");
+            $this->set('error', ERROR_CODE_BAD_REQUEST);
             $this->set('errorDescription', $error);
         } else {
             $responseDecode = json_decode($response);
