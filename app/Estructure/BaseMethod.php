@@ -75,9 +75,9 @@ class BaseMethod
     /**
      * Validate Method Post (response)
      * @param object $body Request Body
-     * @param object $required Fields required not in body
-     * @param object $notAvailables Fields not availables in body
-     * @param object $fieldsNotVarType Fields with wrong data type
+     * @param array $required Fields required not in body
+     * @param array $notAvailables Fields not availables in body
+     * @param array $fieldsNotVarType Fields with wrong data type
      */
     protected function validMethodPOST($body = [], $required = [], $notAvailables = [], $fieldsNotVarType = []) {
         $this->set('error', ERROR_CODE_SUCCESS);
@@ -164,5 +164,34 @@ class BaseMethod
 
     protected function encriptMd5($pass = '') {
         return md5( $pass );
+    }
+
+    /**
+     * Genera una respuesta JSON estándar con header y return
+     * 
+     * @param mixed $data Datos a incluir en la respuesta (opcional)
+     * @param string $operation Tipo de operación (por defecto 'request')
+     * @return \stdClass Objeto JSON con estructura estándar
+     */
+    protected function generateJsonResponse($data = null, string $operation = 'request'): \stdClass 
+    {
+        $json = new \stdClass();
+        
+        // Header estándar
+        $json->Header = new \stdClass();
+        $json->Header->Datetime = date('Y-m-d H:i:s');
+        $json->Header->Operation = $operation;
+
+        // Return con código y descripción de error
+        $json->Return = new \stdClass();
+        $json->Return->Code = $this->get('error');
+        $json->Return->Description = $this->get('errorDescription');
+
+        // Agregar datos solo si existen y no hay error
+        if ($data !== null && !empty($data)) {
+            $json->Data = $data;
+        }
+
+        return $json;
     }
 }

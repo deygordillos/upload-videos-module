@@ -5,6 +5,7 @@ namespace App\Estructure\BLL;
 use App\Estructure\BaseMethod;
 use App\Estructure\DAO\CapacityDAO;
 use App\Estructure\DAO\ConfigurationsDAO;
+use App\Estructure\DTO\CapacityDTO;
 use App\Utils\DayLog;
 
 class CapacityBLL extends BaseMethod
@@ -53,15 +54,20 @@ class CapacityBLL extends BaseMethod
             $dates = $body->fechas;
             $arrayDates = explode(',', $dates);
 
-            $this->DAO->set('poolId', (int) $body->id_pool);
-            $this->DAO->set('id_order', (isset($body->id_order) ? (int) $body->id_order : 0));
-            $this->DAO->set('periodo', isset($body->periodo) ? trim(addslashes($body->periodo)) : '');
-            $this->DAO->set('data', $body);
-            $this->DAO->getCapacity();
+            // Crear DTO para getCapacity
+            $capacityDTO = new CapacityDTO([
+                'poolId' => (int) $body->id_pool,
+                'id_order' => (isset($body->id_order) ? (int) $body->id_order : 0),
+                'periodo' => isset($body->periodo) ? trim(addslashes($body->periodo)) : '',
+                'data' => $body,
+                'log' => $this->log,
+                'tx' => $this->tx
+            ]);
+
+            $arrayCategory = $this->DAO->getCapacity($capacityDTO);
 
             $arrayFechaCategory = [];
             if ($this->DAO->get('error') == ERROR_CODE_SUCCESS) {
-                $arrayCategory = $this->DAO->get('arrayData');
 
                 $this->log->writeLog("$this->tx cant minutos orden:(" . $body->cantidad . ")\n");
 
@@ -80,25 +86,34 @@ class CapacityBLL extends BaseMethod
                 // seleccionadas en el autoagendamiento
                 //////////////////////////////
                 $arrayDatesOrder = [];
-                if (!empty($this->DAO->get('id_order'))) {
-                    $this->DAO->getDatesFromOrderToSchedule();
-                    $arrayDatesOrder = $this->DAO->get('dateSelect');
+                if (!empty($capacityDTO->getIdOrder())) {
+                    $orderDTO = new CapacityDTO([
+                        'id_order' => $capacityDTO->getIdOrder(),
+                        'log' => $this->log,
+                        'tx' => $this->tx
+                    ]);
+                    $arrayDatesOrder = $this->DAO->getDatesFromOrderToSchedule($orderDTO);
                     $this->log->writeLog("$this->tx arrayDatesOrder: " . print_r($arrayDatesOrder, true) . "\n");
                 }
 
                 foreach ($arrayDates as $date) {
                     $this->log->writeLog("$this->tx :::::::::::\n");
                     $dayofweek = date('w', strtotime($date));
-                    $this->DAO->set('dayofweek', $dayofweek);
-                    $this->DAO->set('date', $date);
-                    $this->DAO->getScheduleBlock();
-                    $tieneBlock = (int) $this->DAO->get('tieneBlock');
+                    
+                    $scheduleDTO = new CapacityDTO([
+                        'dayofweek' => $dayofweek,
+                        'date' => $date,
+                        'log' => $this->log,
+                        'tx' => $this->tx
+                    ]);
+                    
+                    $tieneBlock = $this->DAO->getScheduleBlock($scheduleDTO);
 
                     // Si no tiene bloqueo de fecha
                     if ($tieneBlock == 0) {
                         // Si se envía la orden, se evalúa las fechas obtenidas de la carga
                         // Si no es de las seleccionadas, no obtiene capacidad
-                        if (!empty($this->DAO->get('id_order')) && !empty($arrayDatesOrder)) {
+                        if (!empty($capacityDTO->getIdOrder()) && !empty($arrayDatesOrder)) {
                             if (!in_array($date, $arrayDatesOrder)) {
                                 continue;
                             }
@@ -109,11 +124,19 @@ class CapacityBLL extends BaseMethod
                             $this->log->writeLog("$this->tx fecha:($date) dayofweek:($dayofweek) DayOfWeekCalendar:({$row['DayOfWeek']})\n");
                             if ($dayofweek == $row['DayOfWeek']) {
                                 $this->log->writeLog("$this->tx " . $row['categoryId'] . " OK Coincide fecha con calendar del tecnico\n");
-                                $this->DAO->set('categoryId', $row['categoryId']);
-                                $this->DAO->getReservedQuota(); // obtiene la quota reservada para la fecha, categoria y pool especificados
+                                
+                                $reservedQuotaDTO = new CapacityDTO([
+                                    'categoryId' => $row['categoryId'],
+                                    'date' => $date,
+                                    'poolId' => $capacityDTO->getPoolId(),
+                                    'periodo' => $capacityDTO->getPeriodo(),
+                                    'log' => $this->log,
+                                    'tx' => $this->tx
+                                ]);
+                                
+                                $reserved = $this->DAO->getReservedQuota($reservedQuotaDTO); // obtiene la quota reservada para la fecha, categoria y pool especificados
                                 if ($this->DAO->get('error') == ERROR_CODE_SUCCESS) {
                                     $cuota = (float) $row['quota'];
-                                    $reserved = (float) $this->DAO->get('reserved');
                                     $keyReserva = $row['categoryId'] . $date;
                                     $this->log->writeLog("$this->tx KeyReserva " . $row['categoryId'] . " fecha:($keyReserva) " . print_r($arrayFechaCategory, true) . "\n");
                                     if (!in_array($keyReserva, $arrayFechaCategory)) {
@@ -142,18 +165,8 @@ class CapacityBLL extends BaseMethod
             }
         }
 
-        $json = new \stdClass();
-        $json->Header = new \stdClass();
-        $json->Header->Datetime = date('Y-m-d H:i:s');
-        $json->Header->Operation = 'request';
-
-        $json->Return = new \stdClass();
-        $json->Return->Code = $this->get('error');
-        $json->Return->Description = $this->get('errorDescription');
-
-        if (!empty($capacityResult)) {
-            $json->Data = $capacityResult;
-        }
+        // Generar respuesta JSON usando el método reutilizable
+        $json = $this->generateJsonResponse($capacityResult);
 
         $this->log->writeLog("$this->tx " . __FUNCTION__ . " Response: " . print_r(json_encode($json), true) . "\n");
         $this->log->writeLog("$this->tx " . __CLASS__ . " " . __FUNCTION__ . " Fin \n\n");
@@ -191,17 +204,21 @@ class CapacityBLL extends BaseMethod
 
         // Si la validación del request está OK
         if ($this->get('error') === ERROR_CODE_SUCCESS) {
-            $this->DAO->set('cantidad', (int) $body->cantidad ?? 0); // minutos de duracion de la orden
-            $this->DAO->set('poolId', (int) $body->id_pool); // id pool orden
-            $this->DAO->set('periodo', trim(addslashes($body->periodo))); // id periodo
-            $this->DAO->set('date', $body->fecha); // fecha a agendar            
-            $this->DAO->set('data', $body);
             $dayofweek = date('w', strtotime($body->fecha)); // dia de la semana de la fecha ingresada
             $this->log->writeLog("$this->tx fecha:{$body->fecha} dayofweek:{$dayofweek}\n");
 
-            $this->DAO->getCapacity();
+            // Crear DTO para getCapacity
+            $capacityDTO = new CapacityDTO([
+                'poolId' => (int) $body->id_pool,
+                'periodo' => trim(addslashes($body->periodo)),
+                'date' => $body->fecha,
+                'data' => $body,
+                'log' => $this->log,
+                'tx' => $this->tx
+            ]);
+
+            $arrayCategory = $this->DAO->getCapacity($capacityDTO);
             if ($this->DAO->get('error') == ERROR_CODE_SUCCESS) {
-                $arrayCategory = $this->DAO->get('arrayData');
 
                 $this->log->writeLog("$this->tx arrayCategory count:(" . count($arrayCategory) . ")\n");
                 if (count($arrayCategory) == 0) {
@@ -221,10 +238,17 @@ class CapacityBLL extends BaseMethod
                             $currentQuota = $row['quota'];
                             $sumQuota += (int) $currentQuota;
 
-                            $this->DAO->set('categoryId', $row['categoryId']);
-                            $this->DAO->getReservedQuota();
+                            $reservedQuotaDTO = new CapacityDTO([
+                                'categoryId' => $row['categoryId'],
+                                'date' => $body->fecha,
+                                'poolId' => $capacityDTO->getPoolId(),
+                                'periodo' => $capacityDTO->getPeriodo(),
+                                'log' => $this->log,
+                                'tx' => $this->tx
+                            ]);
+                            
+                            $currentReserved = $this->DAO->getReservedQuota($reservedQuotaDTO);
                             if ($this->DAO->get('error') == ERROR_CODE_SUCCESS) {
-                                $currentReserved = $this->DAO->get('reserved');
                                 $sumReserva += (int) $currentReserved;
                             }
 
@@ -248,17 +272,25 @@ class CapacityBLL extends BaseMethod
                         $dataMinEntreViaje = $configDAO->getConfigByName('MIN_VIAJE_CLIENTE_ENTRE_ORDEN');
                         $minEntreViaje = (int) $dataMinEntreViaje['valor'] ?? 0;
                         $minEntreViaje = $minEntreViaje / $iCapategory;
-                        $this->DAO->set('minEntreViaje', $minEntreViaje);
                         $this->log->writeLog("$this->tx minEntreViaje: " . print_r($minEntreViaje, true) . "\n");
                         //////////////////////////////
 
                         $available = $quota - $reserved - $minEntreViaje;
                         if ($available > 0 && $available >= $body->cantidad) {
                             $minOrder = $body->cantidad / $iCapategory;
-                            $this->DAO->set('requestedAmount', $minOrder); // minutos de duracion de la orden                        
                             foreach ($arrayIdCategories as $idCategory) {
-                                $this->DAO->set('categoryId', $idCategory);
-                                $this->DAO->setReservedQuota();
+                                $setReservedDTO = new CapacityDTO([
+                                    'categoryId' => $idCategory,
+                                    'date' => $body->fecha,
+                                    'poolId' => $capacityDTO->getPoolId(),
+                                    'requestedAmount' => $minOrder,
+                                    'minEntreViaje' => $minEntreViaje,
+                                    'periodo' => $capacityDTO->getPeriodo(),
+                                    'log' => $this->log,
+                                    'tx' => $this->tx
+                                ]);
+                                
+                                $this->DAO->setReservedQuota($setReservedDTO);
                                 $this->set('error', $this->DAO->get('error'));
                                 $this->set('errorDescription', $this->DAO->get('errorDescription'));
                                 $this->log->writeLog("$this->tx setReservedQuota:" . $this->get('error') . "\n");
@@ -281,14 +313,8 @@ class CapacityBLL extends BaseMethod
             }
         }
 
-        $json = new \stdClass();
-        $json->Header = new \stdClass();
-        $json->Header->Datetime = date('Y-m-d H:i:s');
-        $json->Header->Operation = 'request';
-
-        $json->Return = new \stdClass();
-        $json->Return->Code = $this->get('error');
-        $json->Return->Description = $this->get('errorDescription');
+        // Generar respuesta JSON usando el método reutilizable
+        $json = $this->generateJsonResponse();
 
         $this->log->writeLog("$this->tx " . __FUNCTION__ . " Response: " . print_r(json_encode($json), true) . "\n");
         $this->log->writeLog("$this->tx " . __CLASS__ . " " . __FUNCTION__ . " Fin \n\n");
