@@ -7,6 +7,8 @@ use App\Utils\DayLog;
  * Clase Singleton para gestionar una única conexión a la base de datos
  * por request. Utiliza PDO para una gestión de errores y seguridad mejoradas.
  * Incluye métodos utilitarios para operaciones comunes de base de datos.
+ * @version 1.1.0
+ * @author Dey Gordillo <dey.gordillo@simpledatacorp.com>
  */
 class DatabaseConnection 
 {
@@ -107,11 +109,11 @@ class DatabaseConnection
      */
     public function closeConnection()
     {
-        $this->connection = null;
-        self::$instance = null;
-
-        // Log de cierre de conexión a BD con DayLog
-        $this->log->writeLog("DatabaseConnection: Se cerró una conexión a la base de datos (PDO). \n");
+        if ($this->connection !== null) {
+            $this->connection = null;
+            self::$instance = null;
+            $this->log->writeLog("DatabaseConnection: Se cerró una conexión a la base de datos (PDO). \n");
+        }
     }
 
     /**
@@ -159,6 +161,7 @@ class DatabaseConnection
     public function getRow($query, $params = [])
     {
         $row = [];
+        $startTime = microtime(true);
         
         try {
             $connection = $this->getConnection();
@@ -183,8 +186,11 @@ class DatabaseConnection
             $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             $count = count($result);
 
+            $endTime = microtime(true);
+            $executionTime = round(($endTime - $startTime) * 1000, 2); // tiempo en milisegundos
+
             if ($this->log && $this->tx) {
-                $this->log->writeLog("{$this->tx} [response ({$count} rows)]:\n");
+                $this->log->writeLog("{$this->tx} [response ({$count} rows)] time: {$executionTime}ms\n");
             }
 
             if ($count > 0) {
@@ -222,6 +228,7 @@ class DatabaseConnection
     public function getData($query, $params = [])
     {
         $data = [];
+        $startTime = microtime(true);
         
         try {
             $connection = $this->getConnection();
@@ -246,8 +253,11 @@ class DatabaseConnection
             $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             $count = count($result);
 
+            $endTime = microtime(true);
+            $executionTime = round(($endTime - $startTime) * 1000, 2); // tiempo en milisegundos
+
             if ($this->log && $this->tx) {
-                $this->log->writeLog("{$this->tx} [response ({$count} rows)]:\n");
+                $this->log->writeLog("{$this->tx} [response ({$count} rows)] time: {$executionTime}ms\n");
             }
 
             if ($count > 0) {
@@ -285,6 +295,7 @@ class DatabaseConnection
     public function addRow($query, $params = [])
     {
         $insertId = 0;
+        $startTime = microtime(true);
         
         try {
             $connection = $this->getConnection();
@@ -311,17 +322,20 @@ class DatabaseConnection
             $insertId = $connection->lastInsertId();
             $connection->commit();
 
+            $endTime = microtime(true);
+            $executionTime = round(($endTime - $startTime) * 1000, 2); // tiempo en milisegundos
+
             if ($insertId > 0) {
                 $this->error = ERROR_CODE_SUCCESS;
                 $this->errorDescription = 'Guardado exitosamente';
                 if ($this->log && $this->tx) {
-                    $this->log->writeLog("{$this->tx} Guardado exitosamente\n");
+                    $this->log->writeLog("{$this->tx} Guardado exitosamente time: {$executionTime}ms\n");
                 }
             } else {
                 $this->error = ERROR_CODE_INTERNAL_SERVER;
                 $this->errorDescription = 'No se pudo guardar el registro.';
                 if ($this->log && $this->tx) {
-                    $this->log->writeLog("{$this->tx} No se pudo guardar el registro.\n");
+                    $this->log->writeLog("{$this->tx} No se pudo guardar el registro. time: {$executionTime}ms\n");
                 }
             }
 
@@ -346,6 +360,7 @@ class DatabaseConnection
     public function modifyRow($query, $params = [])
     {
         $success = false;
+        $startTime = microtime(true);
         
         try {
             $connection = $this->getConnection();
@@ -372,10 +387,13 @@ class DatabaseConnection
             $connection->commit();
             $success = true;
 
+            $endTime = microtime(true);
+            $executionTime = round(($endTime - $startTime) * 1000, 2); // tiempo en milisegundos
+
             $this->error = ERROR_CODE_SUCCESS;
             $this->errorDescription = 'Modificación exitosa';
             if ($this->log && $this->tx) {
-                $this->log->writeLog("{$this->tx} Modificación exitosa\n");
+                $this->log->writeLog("{$this->tx} Modificación exitosa time: {$executionTime}ms\n");
             }
 
         } catch (\PDOException $e) {

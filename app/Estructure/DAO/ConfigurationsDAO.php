@@ -28,15 +28,15 @@ class ConfigurationsDAO extends BaseMethod
         $arrayData = $db->getRow($query, $params);
 
         if ($db->getError() === ERROR_CODE_SUCCESS) {
-            $this->set('error', ERROR_CODE_SUCCESS);
-            $this->set('errorDescription', ERROR_DESC_SUCCESS);
+            $this->error = ERROR_CODE_SUCCESS;
+            $this->errorDescription = ERROR_DESC_SUCCESS;
         } else if ($db->getError() === ERROR_CODE_NOT_FOUND) {
-            $this->set('error', ERROR_CODE_NOT_FOUND);
-            $this->set('errorDescription', ERROR_DESC_NOT_FOUND);
+            $this->error = ERROR_CODE_NOT_FOUND;
+            $this->errorDescription = ERROR_DESC_NOT_FOUND;
             $arrayData = [];
         } else {
-            $this->set('error', $db->getError());
-            $this->set('errorDescription', $db->getErrorDescription());
+            $this->error = $db->getError();
+            $this->errorDescription = $db->getErrorDescription();
             $arrayData = [];
         }
 

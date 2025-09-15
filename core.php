@@ -10,6 +10,8 @@
 use App\Estructure\BLL\CapacityBLL;
 use App\Handlers\HttpErrorHandler;
 use App\Handlers\ShutdownHandler;
+use App\Utils\DayLog;
+use App\Utils\DatabaseConnection;
 
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -32,7 +34,7 @@ require_once dirname(__FILE__) . '/config.php';
 $displayErrorDetails = true;
 
 $app = AppFactory::create();
-//$app->setBasePath('/v1');
+$app->setBasePath($_ENV['APP_PATH'] ?? '/');
 //$app->setBasePath('/whatsapp/rest/v1');
 
 $callableResolver = $app->getCallableResolver();
@@ -91,25 +93,40 @@ $app->get('/test', function (Request $request, Response $response, $args) {
 });
 
 $app->group('/core', function (RouteCollectorProxy $group) {
-    $group->post('/schedule', function ($request, $response, array $args) {
-        $body = (object)$request->getParsedBody();
+    
+    $group->get('/', function ($request, $response, array $args) {
+
+        $body = (object)$request->getQueryParams();
+        $body->cantidad = (int)$body->cantidad ?? 0;
+        $body->id_pool = (int)$body->id_pool ?? 0;
+        // Crear instancia del BLL y pasar los componentes
         $class = new CapacityBLL();
-        $returnObject = $class->schedule($body);
-
-        $returnObject->links = new stdClass;
-        $httpProtocol = isset($_SERVER['HTTPS']) ? 'https://' : 'http://';
-        $urlSelf = $httpProtocol . $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'] ?? '';
-        $returnObject->links->self = $urlSelf;
-
+        
+        $returnObject = $class->getCapacity($body);
         $response
             ->getBody()
             ->write( json_encode($returnObject) );
-        $newResponse = $response->withStatus( $returnObject->status->code );
+        $newResponse = $response->withStatus( $returnObject->Return->Code ?? 200 );
+        return $newResponse;
+    });
+    
+    $group->post('/schedule', function ($request, $response, array $args) {
+        $body = (object)$request->getParsedBody();
+        // Crear instancia del BLL y pasar los componentes
+        $class = new CapacityBLL();
+        $returnObject = $class->schedule($body);
+        $response
+            ->getBody()
+            ->write( json_encode($returnObject) );
+        $newResponse = $response->withStatus( $returnObject->Return->Code ?? 200 );
         return $newResponse;
     });
 });
 
 try {
+    // Se obtiene la instancia de conexión, la cual se creará si no existe.
+    DatabaseConnection::getInstance();
+
     $app->run();
 } catch (Throwable $exception) {
     http_response_code(400);
@@ -117,4 +134,13 @@ try {
         "code" => 400, 
         "message" => sprintf('Bad Request: %s', $exception->getMessage())
     ]);
+} finally {
+    // Cerrar conexión DB al finalizar el request
+    try {
+        if (DatabaseConnection::getInstance()) {
+            DatabaseConnection::getInstance()->closeConnection();
+        }
+    } catch (Exception $dbError) {
+        // Ignorar errores de cierre de DB en manejo de errores
+    }
 }

@@ -7,7 +7,10 @@ class BaseMethod
 
     protected $log;
     protected $tx;
+    protected $dbConnection;
     protected $data;    
+    protected $error;
+    protected $errorDescription;
     protected $camposRequired = []; // campos requeridos
     protected $camposAvailables = []; // campos no permitidos    
     protected $required = []; // campos requeridos (para retorno de error)
@@ -24,6 +27,33 @@ class BaseMethod
     public function get($name)
     {
         return $this->$name ?? '';
+    }
+
+    /**
+     * Establece el objeto de log
+     * @param mixed $log Instancia del log
+     */
+    public function setLog($log): void
+    {
+        $this->log = $log;
+    }
+
+    /**
+     * Establece el transaction ID
+     * @param string $tx Transaction ID
+     */
+    public function setTx(string $tx): void
+    {
+        $this->tx = $tx;
+    }
+
+    /**
+     * Establece la conexión a la base de datos
+     * @param mixed $dbConnection Instancia de la conexión a BD
+     */
+    public function setDbConnection($dbConnection): void
+    {
+        $this->dbConnection = $dbConnection;
     }
 
     protected function getToken()
@@ -80,30 +110,30 @@ class BaseMethod
      * @param array $fieldsNotVarType Fields with wrong data type
      */
     protected function validMethodPOST($body = [], $required = [], $notAvailables = [], $fieldsNotVarType = []) {
-        $this->set('error', ERROR_CODE_SUCCESS);
-        $this->set('errorDescription', ERROR_DESC_SUCCESS);
+        $this->error = ERROR_CODE_SUCCESS;
+        $this->errorDescription = ERROR_DESC_SUCCESS;
 
         if (empty($body)) {
-            $this->set('error', ERROR_CODE_BAD_REQUEST);
-            $this->set('errorDescription', ERROR_DESC_BAD_REQUEST . '. Debe enviar campos por Body.');
+            $this->error = ERROR_CODE_BAD_REQUEST;
+            $this->errorDescription = ERROR_DESC_BAD_REQUEST . '. Debe enviar campos por Body.';
         } else {
             // si hay valores que no cumplen con los tipos de datos
             if ( !empty($fieldsNotVarType) ) {
-                $this->set('error', ERROR_CODE_BAD_REQUEST);
-                $this->set('errorDescription', ERROR_DESC_BAD_REQUEST . '. [' . implode(', ', $fieldsNotVarType) . '] ');
-                $this->log->writeLog("{$this->tx} " . __FUNCTION__ . " :" . print_r($this->get('errorDescription'), true) . "\n");
+                $this->error = ERROR_CODE_BAD_REQUEST;
+                $this->errorDescription = ERROR_DESC_BAD_REQUEST . '. [' . implode(', ', $fieldsNotVarType) . '] ';
+                $this->log->writeLog("{$this->tx} " . __FUNCTION__ . " :" . print_r($this->errorDescription, true) . "\n");
             }
             // si hay campos requeridos            
             elseif (!empty($required) && $this->isPOST) {
-                $this->set('error', ERROR_CODE_BAD_REQUEST);
-                $this->set('errorDescription', ERROR_DESC_BAD_REQUEST . '. Campos [' . implode(', ', $required) . '] son requeridos.');
-                $this->log->writeLog("{$this->tx} " . __FUNCTION__ . " :" . print_r($this->get('errorDescription'), true) . "\n");
+                $this->error = ERROR_CODE_BAD_REQUEST;
+                $this->errorDescription = ERROR_DESC_BAD_REQUEST . '. Campos [' . implode(', ', $required) . '] son requeridos.';
+                $this->log->writeLog("{$this->tx} " . __FUNCTION__ . " :" . print_r($this->errorDescription, true) . "\n");
             }
             // Si hay campos no permitidos            
             elseif (!empty($notAvailables)) {
-                $this->set('error', ERROR_CODE_BAD_REQUEST);
-                $this->set('errorDescription', ERROR_DESC_BAD_REQUEST . '. Campos [' . implode(', ', $notAvailables) . '] no son permitidos.');
-                $this->log->writeLog("{$this->tx} " . __FUNCTION__ . " :" . print_r($this->get('errorDescription'), true) . "\n");
+                $this->error = ERROR_CODE_BAD_REQUEST;
+                $this->errorDescription = ERROR_DESC_BAD_REQUEST . '. Campos [' . implode(', ', $notAvailables) . '] no son permitidos.';
+                $this->log->writeLog("{$this->tx} " . __FUNCTION__ . " :" . print_r($this->errorDescription, true) . "\n");
             }
         }
     }
@@ -173,7 +203,7 @@ class BaseMethod
      * @param string $operation Tipo de operación (por defecto 'request')
      * @return \stdClass Objeto JSON con estructura estándar
      */
-    protected function generateJsonResponse($data = null, string $operation = 'request'): \stdClass 
+    protected function setBuildResponse($data = null, string $operation = 'request'): \stdClass 
     {
         $json = new \stdClass();
         
@@ -184,8 +214,13 @@ class BaseMethod
 
         // Return con código y descripción de error
         $json->Return = new \stdClass();
-        $json->Return->Code = $this->get('error');
-        $json->Return->Description = $this->get('errorDescription');
+        $json->Return->Code = $this->error;
+        $json->Return->Description = $this->errorDescription;
+
+        $json->Links = new \stdClass;
+        $httpProtocol = isset($_SERVER['HTTPS']) ? 'https://' : 'http://';
+        $urlSelf = $httpProtocol . $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'] ?? '';
+        $json->Links->Self = $urlSelf;
 
         // Agregar datos solo si existen y no hay error
         if ($data !== null && !empty($data)) {

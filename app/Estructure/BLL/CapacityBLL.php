@@ -25,8 +25,14 @@ class CapacityBLL extends BaseMethod
      */
     public function getCapacity($body)
     {
-        $this->log = new DayLog(API_HOME_PATH, 'API_' . __CLASS__ . '_' . __FUNCTION__);
-        $this->tx = substr(uniqid(), 5);
+        // Usar log y tx inyectados desde el controlador, o crear nuevos si no existen
+        if (!$this->log) {
+            $this->log = new DayLog(API_HOME_PATH, 'API_' . __CLASS__ . '_' . __FUNCTION__);
+        }
+        if (!$this->tx) {
+            $this->tx = substr(uniqid(), 5);
+        }
+        
         $this->DAO->set('log', $this->log);
         $this->DAO->set('tx', $this->tx);
 
@@ -35,9 +41,9 @@ class CapacityBLL extends BaseMethod
             'fechas' => ['type' => 'string'],
             'cantidad' => ['type' => 'integer']
         ];
-        $this->camposAvailables = array_keys($this->camposRequired);
-        $this->camposAvailables[] = 'id_order';
-        $this->camposAvailables[] = 'periodo';
+        $this->camposAvailables = array_merge(array_keys($this->camposRequired), [
+            'id_order', 'periodo', 'calcula_duracion', 'calcula_habilidades', 'propiedad_custom'
+        ]);
 
         // Valido campos request
         $body = $this->validRequestFields($body);
@@ -50,7 +56,7 @@ class CapacityBLL extends BaseMethod
         $capacityResult = [];
 
         // Si la validación del request está OK
-        if ($this->get('error') === ERROR_CODE_SUCCESS) {
+        if ($this->error === ERROR_CODE_SUCCESS) {
             $dates = $body->fechas;
             $arrayDates = explode(',', $dates);
 
@@ -59,7 +65,7 @@ class CapacityBLL extends BaseMethod
                 'poolId' => (int) $body->id_pool,
                 'id_order' => (isset($body->id_order) ? (int) $body->id_order : 0),
                 'periodo' => isset($body->periodo) ? trim(addslashes($body->periodo)) : '',
-                'data' => $body,
+                'data' => (array) $body, // Convertir objeto a array
                 'log' => $this->log,
                 'tx' => $this->tx
             ]);
@@ -160,17 +166,14 @@ class CapacityBLL extends BaseMethod
                     }
                 }
             } else {
-                $this->set('error', $this->DAO->get('error'));
-                $this->set('errorDescription', $this->DAO->get('errorDescription'));
+                $this->error = $this->DAO->get('error');
+                $this->errorDescription = $this->DAO->get('errorDescription');
             }
         }
 
         // Generar respuesta JSON usando el método reutilizable
-        $json = $this->generateJsonResponse($capacityResult);
-
-        $this->log->writeLog("$this->tx " . __FUNCTION__ . " Response: " . print_r(json_encode($json), true) . "\n");
-        $this->log->writeLog("$this->tx " . __CLASS__ . " " . __FUNCTION__ . " Fin \n\n");
-
+        $json = $this->setBuildResponse($capacityResult);
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " response: " . print_r(json_encode($json), true) . "\n");
         return $json;
     }
 
@@ -181,8 +184,14 @@ class CapacityBLL extends BaseMethod
      */
     public function schedule($body)
     {
-        $this->log = new DayLog(API_HOME_PATH, 'API_' . __CLASS__ . '_' . __FUNCTION__);
-        $this->tx = substr(uniqid(), 5);
+        // Usar log y tx inyectados desde el controlador, o crear nuevos si no existen
+        if (!$this->log) {
+            $this->log = new DayLog(API_HOME_PATH, 'API_' . __CLASS__ . '_' . __FUNCTION__);
+        }
+        if (!$this->tx) {
+            $this->tx = substr(uniqid(), 5);
+        }
+        
         $this->DAO->set('log', $this->log);
         $this->DAO->set('tx', $this->tx);
 
@@ -203,7 +212,7 @@ class CapacityBLL extends BaseMethod
         $this->validMethodPOST($body, $this->required, $this->notAvailables, $this->fieldsNotVarType);
 
         // Si la validación del request está OK
-        if ($this->get('error') === ERROR_CODE_SUCCESS) {
+        if ($this->error === ERROR_CODE_SUCCESS) {
             $dayofweek = date('w', strtotime($body->fecha)); // dia de la semana de la fecha ingresada
             $this->log->writeLog("$this->tx fecha:{$body->fecha} dayofweek:{$dayofweek}\n");
 
@@ -212,7 +221,7 @@ class CapacityBLL extends BaseMethod
                 'poolId' => (int) $body->id_pool,
                 'periodo' => trim(addslashes($body->periodo)),
                 'date' => $body->fecha,
-                'data' => $body,
+                'data' => (array) $body, // Convertir objeto a array
                 'log' => $this->log,
                 'tx' => $this->tx
             ]);
@@ -222,8 +231,8 @@ class CapacityBLL extends BaseMethod
 
                 $this->log->writeLog("$this->tx arrayCategory count:(" . count($arrayCategory) . ")\n");
                 if (count($arrayCategory) == 0) {
-                    $this->set('error', ERROR_CODE_NOT_FOUND);
-                    $this->set('errorDescription', ERROR_DESC_NOT_FOUND);
+                    $this->error = ERROR_CODE_NOT_FOUND;
+                    $this->errorDescription = ERROR_DESC_NOT_FOUND;
                     $this->log->writeLog("$this->tx No hay categoria para el id especificado\n");
                 } else {
                     $quota = 0;
@@ -291,14 +300,14 @@ class CapacityBLL extends BaseMethod
                                 ]);
                                 
                                 $this->DAO->setReservedQuota($setReservedDTO);
-                                $this->set('error', $this->DAO->get('error'));
-                                $this->set('errorDescription', $this->DAO->get('errorDescription'));
-                                $this->log->writeLog("$this->tx setReservedQuota:" . $this->get('error') . "\n");
+                                $this->error = $this->DAO->get('error');
+                                $this->errorDescription = $this->DAO->get('errorDescription');
+                                $this->log->writeLog("$this->tx setReservedQuota:" . $this->error . "\n");
                             }
 
                         } else {
-                            $this->set('error', ERROR_CODE_BAD_REQUEST);
-                            $this->set('errorDescription', 'No hay capacidad suficiente disponible');
+                            $this->error = ERROR_CODE_BAD_REQUEST;
+                            $this->errorDescription = 'No hay capacidad suficiente disponible';
                             $this->log->writeLog("$this->tx No hay capacidad para categoria especificada\n");
                         }
 
@@ -307,18 +316,15 @@ class CapacityBLL extends BaseMethod
                     }
                 }
             } else {
-                $this->set('error', $this->DAO->get('error'));
-                $this->set('errorDescription', $this->DAO->get('errorDescription'));
+                $this->error = $this->DAO->get('error');
+                $this->errorDescription = $this->DAO->get('errorDescription');
                 $this->log->writeLog("$this->tx " . __FUNCTION__ . " ERROR: " . $this->DAO->get('error') . " " . $this->DAO->get('errorDescription') . "\n");
             }
         }
 
         // Generar respuesta JSON usando el método reutilizable
-        $json = $this->generateJsonResponse();
-
-        $this->log->writeLog("$this->tx " . __FUNCTION__ . " Response: " . print_r(json_encode($json), true) . "\n");
-        $this->log->writeLog("$this->tx " . __CLASS__ . " " . __FUNCTION__ . " Fin \n\n");
-
+        $json = $this->setBuildResponse();
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " response: " . print_r(json_encode($json), true) . "\n");
         return $json;
     }
 }

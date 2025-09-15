@@ -88,6 +88,9 @@ class DayLog {
             $this->szFullPathLog = $this->szHomepath . '/' . $this->szPathLog . '/' . $this->szVptModuleName . '-' . date('Ymd') . self::EXTENSION_FILE_LOG;
             ini_set('error_log', $this->szFullPathLog );
 
+            if (!is_dir($this->szHomepath . '/' . $this->szPathLog)) {
+                mkdir($this->szHomepath . '/' . $this->szPathLog, 0777, true);
+            }
             $this->setError(self::ERROR_CODE_OK);
             $this->setErrorDescription(self::ERROR_DESC_OK);
         }

@@ -8,8 +8,8 @@ services:
     ports:
       - "8260:80"
     volumes:
-      - .:/app
-    working_dir: /app
+      - .:/api
+    working_dir: /api
     expose:
       - 80
     extra_hosts:
