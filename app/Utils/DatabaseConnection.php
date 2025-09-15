@@ -153,32 +153,28 @@ class DatabaseConnection
     }
 
     /**
-     * Ejecuta una consulta SELECT y devuelve una sola fila
+     * Ejecuta una consulta SELECT común para getRow y getData
      * @param string $query La consulta SQL
      * @param array $params Parámetros para la consulta preparada
-     * @return array La fila resultante o array vacío si no hay resultados
+     * @return array Array con el resultado y metadatos
      */
-    public function getRow($query, $params = [])
+    private function executeSelectQuery($query, $params = [])
     {
-        $row = [];
         $startTime = microtime(true);
+        $result = [];
+        $count = 0;
         
         try {
             $connection = $this->getConnection();
+            $this->log->writeLog("{$this->tx} [query]: " . $query . "\n");
+            $this->log->writeLog("{$this->tx} [params]: " . print_r(json_encode($params), true) . "\n");
             
-            if ($this->log && $this->tx) {
-                $this->log->writeLog("{$this->tx} [query]: " . $query . "\n");
-            }
-
             $stmt = $connection->prepare($query);
             
             // Bind parameters if provided
             if (!empty($params)) {
                 foreach ($params as $param => $value) {
                     $stmt->bindParam($param, $value);
-                    if ($this->log && $this->tx) {
-                        $this->log->writeLog("{$this->tx} [param]: {$param} = {$value}\n");
-                    }
                 }
             }
 
@@ -187,36 +183,45 @@ class DatabaseConnection
             $count = count($result);
 
             $endTime = microtime(true);
-            $executionTime = round(($endTime - $startTime) * 1000, 2); // tiempo en milisegundos
+            $executionTime = round(($endTime - $startTime) * 1000, 2);
 
-            if ($this->log && $this->tx) {
-                $this->log->writeLog("{$this->tx} [response ({$count} rows)] time: {$executionTime}ms\n");
-            }
+            $this->log->writeLog("{$this->tx} [response]: ({$count} rows) time: {$executionTime}ms\n");
 
             if ($count > 0) {
-                $row = $result[0];
                 $this->error = ERROR_CODE_SUCCESS;
                 $this->errorDescription = 'Existe registro';
-                if ($this->log && $this->tx) {
-                    $this->log->writeLog("{$this->tx} Existe registro\n");
-                }
             } else {
                 $this->error = ERROR_CODE_NOT_FOUND;
                 $this->errorDescription = 'No existe registro.';
-                if ($this->log && $this->tx) {
-                    $this->log->writeLog("{$this->tx} No existe registro.\n");
-                }
             }
 
         } catch (\PDOException $e) {
             $this->error = ERROR_CODE_INTERNAL_SERVER;
             $this->errorDescription = 'Error en ejecución de query.';
-            if ($this->log && $this->tx) {
-                $this->log->writeLog("{$this->tx} Error query: " . $e->getMessage() . "\n");
-            }
+            $this->log->writeLog("{$this->tx} [error query]: " . $e->getMessage() . "\n");
         }
 
-        return $row;
+        return [
+            'result' => $result,
+            'count' => $count
+        ];
+    }
+
+    /**
+     * Ejecuta una consulta SELECT y devuelve una sola fila
+     * @param string $query La consulta SQL
+     * @param array $params Parámetros para la consulta preparada
+     * @return array La fila resultante o array vacío si no hay resultados
+     */
+    public function getRow($query, $params = [])
+    {
+        $queryResult = $this->executeSelectQuery($query, $params);
+        
+        if ($queryResult['count'] > 0) {
+            return $queryResult['result'][0]; // Retorna solo la primera fila
+        }
+        
+        return []; // Retorna array vacío si no hay resultados
     }
 
     /**
@@ -227,63 +232,12 @@ class DatabaseConnection
      */
     public function getData($query, $params = [])
     {
-        $data = [];
-        $startTime = microtime(true);
+        $queryResult = $this->executeSelectQuery($query, $params);
         
-        try {
-            $connection = $this->getConnection();
-            
-            if ($this->log && $this->tx) {
-                $this->log->writeLog("{$this->tx} [query]: " . $query . "\n");
-            }
-
-            $stmt = $connection->prepare($query);
-            
-            // Bind parameters if provided
-            if (!empty($params)) {
-                foreach ($params as $param => $value) {
-                    $stmt->bindParam($param, $value);
-                    if ($this->log && $this->tx) {
-                        $this->log->writeLog("{$this->tx} [param]: {$param} = {$value}\n");
-                    }
-                }
-            }
-
-            $stmt->execute();
-            $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            $count = count($result);
-
-            $endTime = microtime(true);
-            $executionTime = round(($endTime - $startTime) * 1000, 2); // tiempo en milisegundos
-
-            if ($this->log && $this->tx) {
-                $this->log->writeLog("{$this->tx} [response ({$count} rows)] time: {$executionTime}ms\n");
-            }
-
-            if ($count > 0) {
-                $data = $result;
-                $this->error = ERROR_CODE_SUCCESS;
-                $this->errorDescription = 'Existe registro';
-                if ($this->log && $this->tx) {
-                    $this->log->writeLog("{$this->tx} Existe registro\n");
-                }
-            } else {
-                $this->error = ERROR_CODE_NOT_FOUND;
-                $this->errorDescription = 'No existe registro.';
-                if ($this->log && $this->tx) {
-                    $this->log->writeLog("{$this->tx} No existe registro.\n");
-                }
-            }
-
-        } catch (\PDOException $e) {
-            $this->error = ERROR_CODE_INTERNAL_SERVER;
-            $this->errorDescription = 'Error en ejecución de query.';
-            if ($this->log && $this->tx) {
-                $this->log->writeLog("{$this->tx} Error query: " . $e->getMessage() . "\n");
-            }
+        if ($queryResult['count'] > 0) {
+            return $queryResult['result']; // Retorna todas las filas
         }
-
-        return $data;
+        return []; // Retorna array vacío si no hay resultados
     }
 
     /**
@@ -301,9 +255,8 @@ class DatabaseConnection
             $connection = $this->getConnection();
             $connection->beginTransaction();
             
-            if ($this->log && $this->tx) {
-                $this->log->writeLog("{$this->tx} [query]: " . $query . "\n");
-            }
+            $this->log->writeLog("{$this->tx} [query]: " . $query . "\n");
+            $this->log->writeLog("{$this->tx} [params]: " . print_r(json_encode($params), true) . "\n");
 
             $stmt = $connection->prepare($query);
             
@@ -311,9 +264,6 @@ class DatabaseConnection
             if (!empty($params)) {
                 foreach ($params as $param => $value) {
                     $stmt->bindParam($param, $value);
-                    if ($this->log && $this->tx) {
-                        $this->log->writeLog("{$this->tx} [param]: {$param} = {$value}\n");
-                    }
                 }
             }
 
@@ -323,29 +273,23 @@ class DatabaseConnection
             $connection->commit();
 
             $endTime = microtime(true);
-            $executionTime = round(($endTime - $startTime) * 1000, 2); // tiempo en milisegundos
+            $executionTime = round(($endTime - $startTime) * 1000, 2);
 
             if ($insertId > 0) {
                 $this->error = ERROR_CODE_SUCCESS;
                 $this->errorDescription = 'Guardado exitosamente';
-                if ($this->log && $this->tx) {
-                    $this->log->writeLog("{$this->tx} Guardado exitosamente time: {$executionTime}ms\n");
-                }
+                $this->log->writeLog("{$this->tx} [response]: insertId({$insertId}) time: {$executionTime}ms\n");
             } else {
                 $this->error = ERROR_CODE_INTERNAL_SERVER;
                 $this->errorDescription = 'No se pudo guardar el registro.';
-                if ($this->log && $this->tx) {
-                    $this->log->writeLog("{$this->tx} No se pudo guardar el registro. time: {$executionTime}ms\n");
-                }
+                $this->log->writeLog("{$this->tx} [response]: No se pudo guardar el registro. time: {$executionTime}ms\n");
             }
 
         } catch (\PDOException $e) {
             $connection->rollBack();
             $this->error = ERROR_CODE_INTERNAL_SERVER;
             $this->errorDescription = 'Error en ejecución de query.';
-            if ($this->log && $this->tx) {
-                $this->log->writeLog("{$this->tx} Error query: " . $e->getMessage() . "\n");
-            }
+            $this->log->writeLog("{$this->tx} [error query]: " . $e->getMessage() . "\n");
         }
 
         return $insertId;
@@ -366,9 +310,8 @@ class DatabaseConnection
             $connection = $this->getConnection();
             $connection->beginTransaction();
             
-            if ($this->log && $this->tx) {
-                $this->log->writeLog("{$this->tx} [query]: " . $query . "\n");
-            }
+            $this->log->writeLog("{$this->tx} [query]: " . $query . "\n");
+            $this->log->writeLog("{$this->tx} [params]: " . print_r(json_encode($params), true) . "\n");
 
             $stmt = $connection->prepare($query);
             
@@ -376,9 +319,6 @@ class DatabaseConnection
             if (!empty($params)) {
                 foreach ($params as $param => $value) {
                     $stmt->bindParam($param, $value);
-                    if ($this->log && $this->tx) {
-                        $this->log->writeLog("{$this->tx} [param]: {$param} = {$value}\n");
-                    }
                 }
             }
 
@@ -388,21 +328,17 @@ class DatabaseConnection
             $success = true;
 
             $endTime = microtime(true);
-            $executionTime = round(($endTime - $startTime) * 1000, 2); // tiempo en milisegundos
+            $executionTime = round(($endTime - $startTime) * 1000, 2);
 
             $this->error = ERROR_CODE_SUCCESS;
             $this->errorDescription = 'Modificación exitosa';
-            if ($this->log && $this->tx) {
-                $this->log->writeLog("{$this->tx} Modificación exitosa time: {$executionTime}ms\n");
-            }
+            $this->log->writeLog("{$this->tx} [response]: affectedRows({$this->affectedRows}) time: {$executionTime}ms\n");
 
         } catch (\PDOException $e) {
             $connection->rollBack();
             $this->error = ERROR_CODE_INTERNAL_SERVER;
             $this->errorDescription = 'Error en ejecución de query.';
-            if ($this->log && $this->tx) {
-                $this->log->writeLog("{$this->tx} Error query: " . $e->getMessage() . "\n");
-            }
+            $this->log->writeLog("{$this->tx} [error query]: " . $e->getMessage() . "\n");
         }
 
         return $success;

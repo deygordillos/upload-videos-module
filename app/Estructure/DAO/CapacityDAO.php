@@ -15,8 +15,6 @@ class CapacityDAO extends BaseMethod
      */
     public function getCapacity(CapacityDTO $dto): array
     {
-        $this->log = $dto->getLog();
-        $this->tx = $dto->getTx();
         $this->log->writeLog("$this->tx " . __FUNCTION__ . "\n");
 
         $this->set('error', ERROR_CODE_SUCCESS);
@@ -87,8 +85,6 @@ class CapacityDAO extends BaseMethod
      */
     public function getReservedQuota(CapacityDTO $dto): int
     {
-        $this->log = $dto->getLog();
-        $this->tx = $dto->getTx();
         $this->log->writeLog("$this->tx " . __FUNCTION__ . "\n");
 
         $this->set('error', ERROR_CODE_SUCCESS);
@@ -142,8 +138,6 @@ class CapacityDAO extends BaseMethod
      */
     public function setReservedQuota(CapacityDTO $dto): int
     {
-        $this->log = $dto->getLog();
-        $this->tx = $dto->getTx();
         $this->log->writeLog("$this->tx " . __FUNCTION__ . "\n");
 
         $this->set('error', ERROR_CODE_SUCCESS);
@@ -192,8 +186,6 @@ class CapacityDAO extends BaseMethod
      */
     public function getScheduleBlock(CapacityDTO $dto): int
     {
-        $this->log = $dto->getLog();
-        $this->tx = $dto->getTx();
         $this->log->writeLog("$this->tx " . __FUNCTION__ . "\n");
         $this->set('error', ERROR_CODE_SUCCESS);
         $this->set('errorDescription', ERROR_DESC_SUCCESS);
@@ -244,8 +236,6 @@ class CapacityDAO extends BaseMethod
      */
     public function getDatesFromOrderToSchedule(CapacityDTO $dto): array
     {
-        $this->log = $dto->getLog();
-        $this->tx = $dto->getTx();
         $this->log->writeLog("$this->tx " . __FUNCTION__ . "\n");
         $this->set('error', ERROR_CODE_SUCCESS);
         $this->set('errorDescription', ERROR_DESC_SUCCESS);

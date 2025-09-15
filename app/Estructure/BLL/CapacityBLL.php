@@ -65,9 +65,7 @@ class CapacityBLL extends BaseMethod
                 'poolId' => (int) $body->id_pool,
                 'id_order' => (isset($body->id_order) ? (int) $body->id_order : 0),
                 'periodo' => isset($body->periodo) ? trim(addslashes($body->periodo)) : '',
-                'data' => (array) $body, // Convertir objeto a array
-                'log' => $this->log,
-                'tx' => $this->tx
+                'data' => (array) $body // Convertir objeto a array
             ]);
 
             $arrayCategory = $this->DAO->getCapacity($capacityDTO);
@@ -94,9 +92,7 @@ class CapacityBLL extends BaseMethod
                 $arrayDatesOrder = [];
                 if (!empty($capacityDTO->getIdOrder())) {
                     $orderDTO = new CapacityDTO([
-                        'id_order' => $capacityDTO->getIdOrder(),
-                        'log' => $this->log,
-                        'tx' => $this->tx
+                        'id_order' => $capacityDTO->getIdOrder()
                     ]);
                     $arrayDatesOrder = $this->DAO->getDatesFromOrderToSchedule($orderDTO);
                     $this->log->writeLog("$this->tx arrayDatesOrder: " . print_r($arrayDatesOrder, true) . "\n");
@@ -108,9 +104,7 @@ class CapacityBLL extends BaseMethod
                     
                     $scheduleDTO = new CapacityDTO([
                         'dayofweek' => $dayofweek,
-                        'date' => $date,
-                        'log' => $this->log,
-                        'tx' => $this->tx
+                        'date' => $date
                     ]);
                     
                     $tieneBlock = $this->DAO->getScheduleBlock($scheduleDTO);
@@ -135,9 +129,7 @@ class CapacityBLL extends BaseMethod
                                     'categoryId' => $row['categoryId'],
                                     'date' => $date,
                                     'poolId' => $capacityDTO->getPoolId(),
-                                    'periodo' => $capacityDTO->getPeriodo(),
-                                    'log' => $this->log,
-                                    'tx' => $this->tx
+                                    'periodo' => $capacityDTO->getPeriodo()
                                 ]);
                                 
                                 $reserved = $this->DAO->getReservedQuota($reservedQuotaDTO); // obtiene la quota reservada para la fecha, categoria y pool especificados
@@ -221,9 +213,7 @@ class CapacityBLL extends BaseMethod
                 'poolId' => (int) $body->id_pool,
                 'periodo' => trim(addslashes($body->periodo)),
                 'date' => $body->fecha,
-                'data' => (array) $body, // Convertir objeto a array
-                'log' => $this->log,
-                'tx' => $this->tx
+                'data' => (array) $body // Convertir objeto a array
             ]);
 
             $arrayCategory = $this->DAO->getCapacity($capacityDTO);
@@ -251,9 +241,7 @@ class CapacityBLL extends BaseMethod
                                 'categoryId' => $row['categoryId'],
                                 'date' => $body->fecha,
                                 'poolId' => $capacityDTO->getPoolId(),
-                                'periodo' => $capacityDTO->getPeriodo(),
-                                'log' => $this->log,
-                                'tx' => $this->tx
+                                'periodo' => $capacityDTO->getPeriodo()
                             ]);
                             
                             $currentReserved = $this->DAO->getReservedQuota($reservedQuotaDTO);
@@ -289,17 +277,13 @@ class CapacityBLL extends BaseMethod
                             $minOrder = $body->cantidad / $iCapategory;
                             foreach ($arrayIdCategories as $idCategory) {
                                 $setReservedDTO = new CapacityDTO([
-                                    'categoryId' => $idCategory,
+                                    'categoryId' => $row['categoryId'],
                                     'date' => $body->fecha,
                                     'poolId' => $capacityDTO->getPoolId(),
-                                    'requestedAmount' => $minOrder,
-                                    'minEntreViaje' => $minEntreViaje,
-                                    'periodo' => $capacityDTO->getPeriodo(),
-                                    'log' => $this->log,
-                                    'tx' => $this->tx
-                                ]);
-                                
-                                $this->DAO->setReservedQuota($setReservedDTO);
+                                    'requestedAmount' => $body->cantidad,
+                                    'minEntreViaje' => isset($body->minEntreViaje) ? (int) $body->minEntreViaje : 0,
+                                    'periodo' => $capacityDTO->getPeriodo()
+                                ]);                                $this->DAO->setReservedQuota($setReservedDTO);
                                 $this->error = $this->DAO->get('error');
                                 $this->errorDescription = $this->DAO->get('errorDescription');
                                 $this->log->writeLog("$this->tx setReservedQuota:" . $this->error . "\n");

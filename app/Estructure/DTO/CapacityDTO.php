@@ -27,10 +27,6 @@ class CapacityDTO
     // Propiedades para getDatesFromOrderToSchedule
     public ?int $id_order = null;
 
-    // Propiedades para logging y transacción
-    public $log = null;
-    public ?string $tx = null;
-
     /**
      * Constructor que permite inicializar con un array de datos
      * @param array $data Datos iniciales para el DTO
@@ -227,25 +223,4 @@ class CapacityDTO
         return $this;
     }
 
-    public function getLog()
-    {
-        return $this->log;
-    }
-
-    public function setLog($log): self
-    {
-        $this->log = $log;
-        return $this;
-    }
-
-    public function getTx(): ?string
-    {
-        return $this->tx;
-    }
-
-    public function setTx(?string $tx): self
-    {
-        $this->tx = $tx;
-        return $this;
-    }
 }
