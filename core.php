@@ -148,43 +148,6 @@ $app->group('/whatsapp', function (RouteCollectorProxy $group) {
     });
 });
 
-$app->group('/botmaker', function (RouteCollectorProxy $group) {
-    $group->post('/sendTemplate', function ($request, $response, array $args) {
-        $body   = (object)$request->getParsedBody();
-        $class  = new WhatsappClassBLL();
-        $returnObject = $class->sendTemplateSelfSchedule($body);
-        
-        $returnObject->links = new stdClass;
-        $httpProtocol = isset($_SERVER['HTTPS']) ? 'https://' : 'http://';
-        $urlSelf = $httpProtocol . $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'] ?? '';
-        $returnObject->links->self = $urlSelf;
-
-        $response
-            ->getBody()
-            ->write( json_encode($returnObject) );
-        $newResponse = $response->withStatus( $returnObject->status->code );
-        return $newResponse;
-    });
-
-    $group->post('/income', function ($request, $response, array $args) {
-        $header = $request->getHeaders();
-        $body   = (object)$request->getParsedBody();
-        $class  = new WhatsappClassBLL();
-        $returnObject = $class->botMakerIncome($header, $body);
-        
-        $returnObject->links = new stdClass;
-        $httpProtocol = isset($_SERVER['HTTPS']) ? 'https://' : 'http://';
-        $urlSelf = $httpProtocol . $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'] ?? '';
-        $returnObject->links->self = $urlSelf;
-
-        $response
-            ->getBody()
-            ->write( json_encode($returnObject) );
-        $newResponse = $response->withStatus( $returnObject->status->code );
-        return $newResponse;
-    });
-});
-
 try {
     $app->run();
 } catch (Throwable $exception) {
