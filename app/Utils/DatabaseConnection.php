@@ -146,15 +146,7 @@ class DatabaseConnection
             $this->log->writeLog("{$this->tx} [db params]: " . print_r(json_encode($params), true) . "\n");
             
             $stmt = $connection->prepare($query);
-            
-            // Bind parameters if provided
-            if (!empty($params)) {
-                foreach ($params as $param => $value) {
-                    $stmt->bindParam($param, $value);
-                }
-            }
-
-            $stmt->execute();
+            $stmt->execute($params);
             $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             $count = count($result);
 
@@ -235,15 +227,7 @@ class DatabaseConnection
             $this->log->writeLog("{$this->tx} [db params]: " . print_r(json_encode($params), true) . "\n");
 
             $stmt = $connection->prepare($query);
-            
-            // Bind parameters if provided
-            if (!empty($params)) {
-                foreach ($params as $param => $value) {
-                    $stmt->bindParam($param, $value);
-                }
-            }
-
-            $stmt->execute();
+            $stmt->execute($params);
             $this->affectedRows = $stmt->rowCount();
             $insertId = $connection->lastInsertId();
             $connection->commit();
@@ -290,15 +274,7 @@ class DatabaseConnection
             $this->log->writeLog("{$this->tx} [db params]: " . print_r(json_encode($params), true) . "\n");
 
             $stmt = $connection->prepare($query);
-            
-            // Bind parameters if provided
-            if (!empty($params)) {
-                foreach ($params as $param => $value) {
-                    $stmt->bindParam($param, $value);
-                }
-            }
-
-            $stmt->execute();
+            $stmt->execute($params);
             $this->affectedRows = $stmt->rowCount();
             $connection->commit();
             $success = true;
