@@ -17,35 +17,15 @@ ini_set("error_log", LOG_PATH . "/php-error-".date("Ymd").".log");
 define('URL_WEB_PRINCIPAL', 'https://consent.simpledatacorp.com');
 define('URL_WEB_SIMPLEDATA', 'https://www.simpledata.solutions');
 define('PREFIX_FONO_PAIS', 56);
-defined('USER_WHATSAPP_API')  OR define('USER_WHATSAPP_API', 'cristian.coccia@simpledatacorp.com'); // username user whastapp
-defined('PASS_WHATSAPP_API')  OR define('PASS_WHATSAPP_API', "#sqn2'UB)nT;?AwZ"); // clave user whatsapp
-defined('URL_WHATSAPP_API')  OR define('URL_WHATSAPP_API', 'https://macrobots.app/api/v1/'); // endpoint whatsapp
-defined('URL_WHATSAPP_API_SDC')  OR define('URL_WHATSAPP_API_SDC', 'http://10.100.20.240:100/whatsapp/'); // endpoint whatsapp
-defined('URL_WHATSAPP_API_BCI')  OR define('URL_WHATSAPP_API_BCI', 'http://10.100.20.240:100/whatsapp/'); // endpoint whatsapp BCI
-defined('URL_WHATSAPP_API_STREAMING_CL')  OR define('URL_WHATSAPP_API_STREAMING_CL', 'http://10.100.20.240:80/whatsapp/'); // endpoint whatsapp BCI
-defined('URL_WHATSAPP_API_PERU')  OR define('URL_WHATSAPP_API_PERU', 'http://10.100.20.240:8081/whatsapp/'); // endpoint whatsapp BCI
-defined('URL_WHATSAPP_API_SDC_GLOBAL')  OR define('URL_WHATSAPP_API_SDC_GLOBAL', 'http://10.100.20.240:100/whatsapp/'); // endpoint whatsapp sdc global
-defined('URL_WHATSAPP_API_TEST')  OR define('URL_WHATSAPP_API_TEST', 'http://10.100.20.240:8083/whatsapp/'); // endpoint whatsapp test
-defined('URL_WHATSAPP_API_DFEED_AUTOAG')  OR define('URL_WHATSAPP_API_DFEED_AUTOAG', 'http://10.100.20.240:90/whatsapp/'); // endpoint Dfeed autoagenda
-defined('URL_DFEED')  OR define('URL_DFEED', 'https://dfeed-cl-qa-ws.simpledatacorp.com/TDC.php'); // endpoint soap dfeed qas
-defined('URL_DFEED_PRD')  OR define('URL_DFEED_PROD', 'http://in-dfeedprdapp/dfeed/soap/cl/v0.00/TDC.php'); // endpoint soap dfeed prod
-defined('URL_API_BOTMAKER')  OR define('URL_API_BOTMAKER', 'https://go.botmaker.com/api/v1.0'); // endpoint api botmaker
-defined('PHONE_BOTMAKER_FROM')  OR define('PHONE_BOTMAKER_FROM', '56937521154'); // numero telefono desde
 
 /**
  * Credenciales de acceso a la base de datos.
  */
-define('USER_DB', 'dfeedprod');
-define('PASS_DB', '#sdcdfeedprod#');
-define('HOST_DB', 'in-dfeed-bbdd');
-define('PORT_DB', 3306);
-define('SCHEMA_DB', 'API_WHATSAPP_SDC');
-
-/**
- * Credenciales mail
- */
-define('MAIL_FROM', 'toolbox.sd@simpledatacorp.com');
-define('MAIL_FROM_NAME', 'Consent');
+define('USER_DB', $_ENV['BDD_USER'] ?? '');
+define('PASS_DB', $_ENV['BDD_PASS'] ?? '');
+define('HOST_DB', $_ENV['BDD_HOST'] ?? '');
+define('PORT_DB', $_ENV['BDD_PORT'] ?? 3306);
+define('SCHEMA_DB', $_ENV['BDD_SCHEMA'] ?? '');
 
 /**
  * Constantes comunes de validacion a todas las clases

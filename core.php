@@ -18,8 +18,15 @@ use Slim\Factory\AppFactory;
 use Slim\Factory\ServerRequestCreatorFactory;
 use Slim\Routing\RouteCollectorProxy;
 
-require_once dirname(__FILE__) . '/config.php';
 require_once dirname(__FILE__) . '/vendor/autoload.php';
+
+try {
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+    $dotenv->load();
+} catch (\Throwable $th) {
+    echo "No .env file found";
+}
+require_once dirname(__FILE__) . '/config.php';
 
 // Set that to your needs
 $displayErrorDetails = true;
