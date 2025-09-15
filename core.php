@@ -1,15 +1,13 @@
 <?php
 /**
- * Api - Smartway
+ * Api - Capacity
  * Slim 4 - Composer
- * CreatedAt: 2021-03-26
- * UpdatedAt: 2021-03-26 
+ * CreatedAt: 15-09-2025 
  * @version 1.0 
  * @author Dey Gordillo <dey.gordillo@simpledatacorp.com>
  */
 
-use App\Estructure\BLL\AuthBLL;
-use App\Estructure\BLL\WhatsappClassBLL;
+use App\Estructure\BLL\CapacityBLL;
 use App\Handlers\HttpErrorHandler;
 use App\Handlers\ShutdownHandler;
 
@@ -19,14 +17,9 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Slim\Factory\AppFactory;
 use Slim\Factory\ServerRequestCreatorFactory;
 use Slim\Routing\RouteCollectorProxy;
-//use Slim\Routing\RouteContext;
-
-use Psr\Http\Message\StreamInterface;
 
 require_once dirname(__FILE__) . '/config.php';
 require_once dirname(__FILE__) . '/vendor/autoload.php';
-
-use App\Middleware\AuthMiddleware;
 
 // Set that to your needs
 $displayErrorDetails = true;
@@ -86,55 +79,16 @@ $errorMiddleware->setDefaultErrorHandler($errorHandler);
 $app->get('/test', function (Request $request, Response $response, $args) {
     $response
         ->getBody()
-        ->write( json_encode(['Testing' => 'OK']) );
+        ->write( json_encode(['testing' => 'OK']) );
     return $response;
 });
 
-$app->group('/whatsapp', function (RouteCollectorProxy $group) {
-    
-    $group->put('/token', function ($request, $response, array $args) {
-       
-        $class = new WhatsappClassBLL();
-        $returnObject = $class->updateTokenWhatsapp();
-       
-        $returnObject->links = new stdClass;
-        $httpProtocol = isset($_SERVER['HTTPS']) ? 'https://' : 'http://';
-        $urlSelf = $httpProtocol . $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'] ?? '';
-        $returnObject->links->self = $urlSelf;
-
-        $response
-            ->getBody()
-            ->write( json_encode($returnObject) );
-        $newResponse = $response->withStatus( $returnObject->status->code );
-        return $newResponse;
-    })->add(AuthMiddleware::class);
-
-    $group->post('/message', function ($request, $response, array $args) {
-        //$dataUser = $request->getAttribute('dataUser');
-       
+$app->group('/core', function (RouteCollectorProxy $group) {
+    $group->post('/schedule', function ($request, $response, array $args) {
         $body = (object)$request->getParsedBody();
-        $class = new WhatsappClassBLL();
-        $returnObject = $class->sendMessageWhastapp($body);
-        
-        $returnObject->links = new stdClass;
-        $httpProtocol = isset($_SERVER['HTTPS']) ? 'https://' : 'http://';
-        $urlSelf = $httpProtocol . $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'] ?? '';
-        $returnObject->links->self = $urlSelf;
+        $class = new CapacityBLL();
+        $returnObject = $class->schedule($body);
 
-        $response
-            ->getBody()
-            ->write( json_encode($returnObject) );
-        $newResponse = $response->withStatus( $returnObject->status->code );
-        return $newResponse;
-    });
-
-    $group->post('/answer', function ($request, $response, array $args) {
-        //$dataUser = $request->getAttribute('dataUser');
-       
-        $body = (object)$request->getParsedBody();
-        $class = new WhatsappClassBLL();
-        $returnObject = $class->saveMessageWhastapp($body);
-        
         $returnObject->links = new stdClass;
         $httpProtocol = isset($_SERVER['HTTPS']) ? 'https://' : 'http://';
         $urlSelf = $httpProtocol . $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'] ?? '';
