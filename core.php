@@ -11,7 +11,6 @@ use App\Estructure\BLL\CapacityBLL;
 use App\Handlers\HttpErrorHandler;
 use App\Handlers\ShutdownHandler;
 use App\Utils\DayLog;
-use App\Utils\DatabaseConnection;
 
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -99,10 +98,13 @@ $app->group('/core', function (RouteCollectorProxy $group) {
         $body = (object)$request->getQueryParams();
         $body->cantidad = (int)$body->cantidad ?? 0;
         $body->id_pool = (int)$body->id_pool ?? 0;
+        $body->periodo = (int)$body->periodo ?? 0;
+        $body->id_order = (int)$body->id_order ?? 0;
         // Crear instancia del BLL y pasar los componentes
         $class = new CapacityBLL();
         
         $returnObject = $class->getCapacity($body);
+        
         $response
             ->getBody()
             ->write( json_encode($returnObject) );
@@ -115,9 +117,11 @@ $app->group('/core', function (RouteCollectorProxy $group) {
         $body->periodo = (int)$body->periodo ?? 0;
         $body->cantidad = (int)$body->cantidad ?? 0;
         $body->id_pool = (int)$body->id_pool ?? 0;
+        $body->id_order = (int)$body->id_order ?? 0;
         // Crear instancia del BLL y pasar los componentes
         $class = new CapacityBLL();
         $returnObject = $class->schedule($body);
+        
         $response
             ->getBody()
             ->write( json_encode($returnObject) );
@@ -127,9 +131,6 @@ $app->group('/core', function (RouteCollectorProxy $group) {
 });
 
 try {
-    // Se obtiene la instancia de conexión, la cual se creará si no existe.
-    DatabaseConnection::getInstance();
-
     $app->run();
 } catch (Throwable $exception) {
     http_response_code(400);
@@ -137,13 +138,4 @@ try {
         "code" => 400, 
         "message" => sprintf('Bad Request: %s', $exception->getMessage())
     ]);
-} finally {
-    // Cerrar conexión DB al finalizar el request
-    try {
-        if (DatabaseConnection::getInstance()) {
-            DatabaseConnection::getInstance()->closeConnection();
-        }
-    } catch (Exception $dbError) {
-        // Ignorar errores de cierre de DB en manejo de errores
-    }
 }

@@ -4,19 +4,14 @@ namespace App\Utils;
 use App\Utils\DayLog;
 
 /**
- * Clase Singleton para gestionar una única conexión a la base de datos
- * por request. Utiliza PDO para una gestión de errores y seguridad mejoradas.
+ * Clase para gestionar conexiones a la base de datos con inyección de dependencias.
+ * Utiliza PDO para una gestión de errores y seguridad mejoradas.
  * Incluye métodos utilitarios para operaciones comunes de base de datos.
- * @version 1.1.0
+ * @version 2.0.0
  * @author Dey Gordillo <dey.gordillo@simpledatacorp.com>
  */
 class DatabaseConnection 
 {
-    /**
-     * @var DatabaseConnection|null La única instancia de la clase.
-     */
-    private static $instance = null;
-
     /**
      * @var \PDO|null La conexión activa a la base de datos.
      */
@@ -48,31 +43,13 @@ class DatabaseConnection
     private $affectedRows = 0;
     
     /**
-     * El constructor privado previene la creación de instancias externas.
+     * Constructor público para permitir inyección de dependencias.
      */
-    private function __construct() {
-        // Inicializa la instancia de DayLog una única vez
+    public function __construct() {
+        // Inicializa la instancia de DayLog
         $this->log = new DayLog(BASE_HOME_PATH, 'DatabaseConnection');
         $this->error = ERROR_CODE_SUCCESS;
         $this->errorDescription = ERROR_DESC_SUCCESS;
-    }
-
-    /**
-     * El método mágico __clone previene la clonación de la instancia.
-     */
-    private function __clone() {}
-
-    /**
-     * Obtiene la única instancia de la clase Singleton.
-     * Si la instancia no existe, la crea.
-     * @return DatabaseConnection
-     */
-    public static function getInstance()
-    {
-        if (self::$instance === null) {
-            self::$instance = new self();
-        }
-        return self::$instance;
     }
     
     /**
@@ -86,7 +63,7 @@ class DatabaseConnection
         if ($this->connection === null) {
             try {
                 // Log de apertura de conexión a BD con DayLog, sin mostrar credenciales sensibles
-                $this->log->writeLog("DatabaseConnection: Se abrió una conexión a la base de datos (PDO) - Esquema: " . SCHEMA_DB . "\n");
+                $this->log->writeLog("{$this->tx} [db open] " . SCHEMA_DB . "\n");
                 
                 $this->connection = new \PDO(
                     "mysql:host=" . HOST_DB . ";dbname=" . SCHEMA_DB,
@@ -97,7 +74,7 @@ class DatabaseConnection
                 $this->connection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             } catch (\PDOException $e) {
                 // Se lanza una excepción personalizada para un mejor manejo de errores.
-                throw new \Exception("Error de conexión a la base de datos: " . $e->getMessage());
+                throw new \Exception("[db error]: " . $e->getMessage());
             }
         }
         return $this->connection;
@@ -111,8 +88,7 @@ class DatabaseConnection
     {
         if ($this->connection !== null) {
             $this->connection = null;
-            self::$instance = null;
-            $this->log->writeLog("DatabaseConnection: Se cerró una conexión a la base de datos (PDO). \n");
+            $this->log->writeLog("{$this->tx} [db closed] \n");
         }
     }
 
@@ -166,8 +142,8 @@ class DatabaseConnection
         
         try {
             $connection = $this->getConnection();
-            $this->log->writeLog("{$this->tx} [query]: " . $query . "\n");
-            $this->log->writeLog("{$this->tx} [params]: " . print_r(json_encode($params), true) . "\n");
+            $this->log->writeLog("{$this->tx} [db query]: " . str_replace(["\n", "\r", "\t"], " ", $query). "\n");
+            $this->log->writeLog("{$this->tx} [db params]: " . print_r(json_encode($params), true) . "\n");
             
             $stmt = $connection->prepare($query);
             
@@ -185,7 +161,7 @@ class DatabaseConnection
             $endTime = microtime(true);
             $executionTime = round(($endTime - $startTime) * 1000, 2);
 
-            $this->log->writeLog("{$this->tx} [response]: ({$count} rows) time: {$executionTime}ms\n");
+            $this->log->writeLog("{$this->tx} [db response]: ({$count} rows) time: {$executionTime}ms\n");
 
             if ($count > 0) {
                 $this->error = ERROR_CODE_SUCCESS;
@@ -198,7 +174,7 @@ class DatabaseConnection
         } catch (\PDOException $e) {
             $this->error = ERROR_CODE_INTERNAL_SERVER;
             $this->errorDescription = ERROR_DESC_INTERNAL_SERVER;
-            $this->log->writeLog("{$this->tx} [error query]: " . $e->getMessage() . "\n");
+            $this->log->writeLog("{$this->tx} [db error query]: " . $e->getMessage() . "\n");
         }
 
         return [
@@ -255,8 +231,8 @@ class DatabaseConnection
             $connection = $this->getConnection();
             $connection->beginTransaction();
             
-            $this->log->writeLog("{$this->tx} [query]: " . $query . "\n");
-            $this->log->writeLog("{$this->tx} [params]: " . print_r(json_encode($params), true) . "\n");
+            $this->log->writeLog("{$this->tx} [db query]: " . str_replace(["\n", "\r", "\t"], " ", $query). "\n");
+            $this->log->writeLog("{$this->tx} [db params]: " . print_r(json_encode($params), true) . "\n");
 
             $stmt = $connection->prepare($query);
             
@@ -277,19 +253,19 @@ class DatabaseConnection
 
             if ($insertId > 0) {
                 $this->error = ERROR_CODE_SUCCESS;
-                $this->errorDescription = 'Guardado exitosamente';
-                $this->log->writeLog("{$this->tx} [response]: insertId({$insertId}) time: {$executionTime}ms\n");
+                $this->errorDescription = ERROR_DESC_SUCCESS;
+                $this->log->writeLog("{$this->tx} [db response]: insertId({$insertId}) time: {$executionTime}ms\n");
             } else {
                 $this->error = ERROR_CODE_INTERNAL_SERVER;
-                $this->errorDescription = 'No se pudo guardar el registro.';
-                $this->log->writeLog("{$this->tx} [response]: No se pudo guardar el registro. time: {$executionTime}ms\n");
+                $this->errorDescription = ERROR_DESC_INTERNAL_SERVER;
+                $this->log->writeLog("{$this->tx} [db response]: No se pudo guardar el registro. time: {$executionTime}ms\n");
             }
 
         } catch (\PDOException $e) {
             $connection->rollBack();
             $this->error = ERROR_CODE_INTERNAL_SERVER;
             $this->errorDescription = 'Error en ejecución de query.';
-            $this->log->writeLog("{$this->tx} [error query]: " . $e->getMessage() . "\n");
+            $this->log->writeLog("{$this->tx} [db error query]: " . $e->getMessage() . "\n");
         }
 
         return $insertId;
@@ -309,9 +285,9 @@ class DatabaseConnection
         try {
             $connection = $this->getConnection();
             $connection->beginTransaction();
-            
-            $this->log->writeLog("{$this->tx} [query]: " . $query . "\n");
-            $this->log->writeLog("{$this->tx} [params]: " . print_r(json_encode($params), true) . "\n");
+
+            $this->log->writeLog("{$this->tx} [db query]: " . str_replace(["\n", "\r", "\t"], " ", $query). "\n");
+            $this->log->writeLog("{$this->tx} [db params]: " . print_r(json_encode($params), true) . "\n");
 
             $stmt = $connection->prepare($query);
             
@@ -331,14 +307,14 @@ class DatabaseConnection
             $executionTime = round(($endTime - $startTime) * 1000, 2);
 
             $this->error = ERROR_CODE_SUCCESS;
-            $this->errorDescription = 'Modificación exitosa';
-            $this->log->writeLog("{$this->tx} [response]: affectedRows({$this->affectedRows}) time: {$executionTime}ms\n");
+            $this->errorDescription = ERROR_DESC_SUCCESS;
+            $this->log->writeLog("{$this->tx} [db response]: affectedRows({$this->affectedRows}) time: {$executionTime}ms\n");
 
         } catch (\PDOException $e) {
             $connection->rollBack();
             $this->error = ERROR_CODE_INTERNAL_SERVER;
-            $this->errorDescription = 'Error en ejecución de query.';
-            $this->log->writeLog("{$this->tx} [error query]: " . $e->getMessage() . "\n");
+            $this->errorDescription = ERROR_DESC_INTERNAL_SERVER;
+            $this->log->writeLog("{$this->tx} [db error query]: " . $e->getMessage() . "\n");
         }
 
         return $success;

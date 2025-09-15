@@ -8,6 +8,20 @@ use App\Utils\DatabaseConnection;
 class CapacityDAO extends BaseMethod
 {
     /**
+     * @var DatabaseConnection Instancia de conexión a la base de datos
+     */
+    private $db;
+
+    /**
+     * Constructor que recibe la conexión de base de datos por inyección de dependencias
+     * @param DatabaseConnection $db Instancia de la conexión a la base de datos
+     */
+    public function __construct(DatabaseConnection $db)
+    {
+        $this->db = $db;
+    }
+
+    /**
      * Metodo que entrega capacidad de categoria para un pool
      * 
      * @param CapacityDTO $dto Objeto con los datos necesarios
@@ -19,9 +33,8 @@ class CapacityDAO extends BaseMethod
         $this->setErrorDescription(ERROR_DESC_SUCCESS);
         $arrayData = [];
 
-        // Usar DatabaseConnection Singleton
-        $db = DatabaseConnection::getInstance();
-        $db->setTx($this->tx);
+        // Usar DatabaseConnection inyectada
+        $this->db->setTx($this->tx);
 
         $poolId = $dto->getPoolId();
         $periodo = $dto->getPeriodo();
@@ -59,10 +72,10 @@ class CapacityDAO extends BaseMethod
         if (!empty($periodo)) {
             $params[':periodo'] = $periodo;
         }
-        $arrayData = $db->getData($query, $params);
-        if ($db->getError() !== ERROR_CODE_SUCCESS) {
-            $this->setError($db->getError());
-            $this->setErrorDescription($db->getErrorDescription());
+        $arrayData = $this->db->getData($query, $params);
+        if ($this->db->getError() !== ERROR_CODE_SUCCESS) {
+            $this->setError($this->db->getError());
+            $this->setErrorDescription($this->db->getErrorDescription());
         }
         return $arrayData;
     }
@@ -78,9 +91,8 @@ class CapacityDAO extends BaseMethod
         $this->setError(ERROR_CODE_SUCCESS);
         $this->setErrorDescription(ERROR_DESC_SUCCESS);
 
-        // Usar DatabaseConnection Singleton
-        $db = DatabaseConnection::getInstance();
-        $db->setTx($this->tx);
+        // Usar DatabaseConnection inyectada
+        $this->db->setTx($this->tx);
 
         $categoryId = $dto->getCategoryId();
         $date = $dto->getDate();
@@ -102,10 +114,10 @@ class CapacityDAO extends BaseMethod
             ':periodo' => $periodo
         ];
 
-        $row = $db->getRow($query, $params);
-        if ($db->getError() !== ERROR_CODE_SUCCESS) {
-            $this->setError($db->getError());
-            $this->setErrorDescription($db->getErrorDescription());
+        $row = $this->db->getRow($query, $params);
+        if ($this->db->getError() !== ERROR_CODE_SUCCESS) {
+            $this->setError($this->db->getError());
+            $this->setErrorDescription($this->db->getErrorDescription());
         }
 
         return $row['reserved'] ?? 0;
@@ -122,9 +134,8 @@ class CapacityDAO extends BaseMethod
         $this->setError(ERROR_CODE_SUCCESS);
         $this->setErrorDescription(ERROR_DESC_SUCCESS);
 
-        // Usar DatabaseConnection Singleton
-        $db = DatabaseConnection::getInstance();
-        $db->setTx($this->tx);
+        // Usar DatabaseConnection inyectada
+        $this->db->setTx($this->tx);
 
         $categoryId = $dto->getCategoryId();
         $date = $dto->getDate();
@@ -146,10 +157,10 @@ class CapacityDAO extends BaseMethod
             ':periodo' => $periodo
         ];
 
-        $insertId = $db->addRow($query, $params);
-        if ($db->getError() !== ERROR_CODE_SUCCESS) {
-            $this->setError($db->getError());
-            $this->setErrorDescription($db->getErrorDescription());
+        $insertId = $this->db->addRow($query, $params);
+        if ($this->db->getError() !== ERROR_CODE_SUCCESS) {
+            $this->setError($this->db->getError());
+            $this->setErrorDescription($this->db->getErrorDescription());
         }
         return $insertId;
     }
@@ -166,9 +177,8 @@ class CapacityDAO extends BaseMethod
         $this->setError(ERROR_CODE_SUCCESS);
         $this->setErrorDescription(ERROR_DESC_SUCCESS);
 
-        // Usar DatabaseConnection Singleton
-        $db = DatabaseConnection::getInstance();
-        $db->setTx($this->tx);
+        // Usar DatabaseConnection inyectada
+        $this->db->setTx($this->tx);
 
         $dayofweek = $dto->getDayofweek();
         $dayDate = $dto->getDate();
@@ -188,10 +198,10 @@ class CapacityDAO extends BaseMethod
             ':dayDate' => $dayDate
         ];
 
-        $row = $db->getRow($query, $params);
-        if ($db->getError() !== ERROR_CODE_SUCCESS) {
-            $this->setError($db->getError());
-            $this->setErrorDescription($db->getErrorDescription());
+        $row = $this->db->getRow($query, $params);
+        if ($this->db->getError() !== ERROR_CODE_SUCCESS) {
+            $this->setError($this->db->getError());
+            $this->setErrorDescription($this->db->getErrorDescription());
         }
 
         $this->log->writeLog("$this->tx " . __FUNCTION__ . " end\n");
@@ -208,8 +218,9 @@ class CapacityDAO extends BaseMethod
     {
         $this->setError(ERROR_CODE_SUCCESS);
         $this->setErrorDescription(ERROR_DESC_SUCCESS);
-        $db = DatabaseConnection::getInstance();
-        $db->setTx($this->tx);
+        
+        // Usar DatabaseConnection inyectada
+        $this->db->setTx($this->tx);
 
         $id_order = $dto->getIdOrder();
         $query = "SELECT
@@ -221,14 +232,14 @@ class CapacityDAO extends BaseMethod
 
         $params = [':id_order' => $id_order];
         $dates = [];
-        $result = $db->getData($query, $params);
-        if ($db->getError() === ERROR_CODE_SUCCESS) {
+        $result = $this->db->getData($query, $params);
+        if ($this->db->getError() === ERROR_CODE_SUCCESS) {
             foreach ($result as $row) {
                 $dates[] = $row['dateSelect'];
             }
         } else {
-            $this->setError($db->getError());
-            $this->setErrorDescription($db->getErrorDescription());
+            $this->setError($this->db->getError());
+            $this->setErrorDescription($this->db->getErrorDescription());
         }
         return $dates;
     }
