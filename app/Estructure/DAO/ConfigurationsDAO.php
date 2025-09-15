@@ -14,33 +14,22 @@ class ConfigurationsDAO extends BaseMethod
      */
     public function getConfigByName($name = '')
     {
-        $this->log->writeLog("$this->tx " . __FUNCTION__ . "\n");
-        
+        $this->setError(ERROR_CODE_SUCCESS);
+        $this->setErrorDescription(ERROR_DESC_SUCCESS);
         // Usar DatabaseConnection Singleton
         $db = DatabaseConnection::getInstance();
         $db->setTx($this->tx);
-        
         $query = "SELECT P.Id, P.Name AS ident, P.Value AS valor, P.TypeForm, P.Group
             FROM `" . SCHEMA_DB . "`.`MAS_PARAMETER` P
             WHERE P.Name = :name";
 
         $params = [':name' => $name];
         $arrayData = $db->getRow($query, $params);
-
-        if ($db->getError() === ERROR_CODE_SUCCESS) {
-            $this->error = ERROR_CODE_SUCCESS;
-            $this->errorDescription = ERROR_DESC_SUCCESS;
-        } else if ($db->getError() === ERROR_CODE_NOT_FOUND) {
-            $this->error = ERROR_CODE_NOT_FOUND;
-            $this->errorDescription = ERROR_DESC_NOT_FOUND;
-            $arrayData = [];
-        } else {
-            $this->error = $db->getError();
-            $this->errorDescription = $db->getErrorDescription();
-            $arrayData = [];
+        
+        if ($db->getError() !== ERROR_CODE_SUCCESS) {
+            $this->setError($db->getError());
+            $this->setErrorDescription($db->getErrorDescription());
         }
-
-        $this->log->writeLog("$this->tx " . __FUNCTION__ . " end\n");
         return $arrayData;
     }
 }

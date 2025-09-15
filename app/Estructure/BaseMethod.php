@@ -56,6 +56,42 @@ class BaseMethod
         $this->dbConnection = $dbConnection;
     }
 
+    /**
+     * Obtiene el código de error
+     * @return int|string Código de error
+     */
+    public function getError()
+    {
+        return $this->error ?? '';
+    }
+
+    /**
+     * Obtiene la descripción del error
+     * @return string Descripción del error
+     */
+    public function getErrorDescription(): string
+    {
+        return $this->errorDescription ?? '';
+    }
+
+    /**
+     * Establece el código de error
+     * @param int|string $error Código de error
+     */
+    public function setError($error): void
+    {
+        $this->error = $error;
+    }
+
+    /**
+     * Establece la descripción del error
+     * @param string $errorDescription Descripción del error
+     */
+    public function setErrorDescription(string $errorDescription): void
+    {
+        $this->errorDescription = $errorDescription;
+    }
+
     protected function getToken()
     {
 

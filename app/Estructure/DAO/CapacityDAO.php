@@ -15,11 +15,8 @@ class CapacityDAO extends BaseMethod
      */
     public function getCapacity(CapacityDTO $dto): array
     {
-        $this->log->writeLog("$this->tx " . __FUNCTION__ . "\n");
-
-        $this->set('error', ERROR_CODE_SUCCESS);
-        $this->set('errorDescription', ERROR_DESC_SUCCESS);
-
+        $this->setError(ERROR_CODE_SUCCESS);
+        $this->setErrorDescription(ERROR_DESC_SUCCESS);
         $arrayData = [];
 
         // Usar DatabaseConnection Singleton
@@ -63,17 +60,10 @@ class CapacityDAO extends BaseMethod
             $params[':periodo'] = $periodo;
         }
         $arrayData = $db->getData($query, $params);
-
-        if ($db->getError() === ERROR_CODE_SUCCESS) {
-            $this->set('arrayData', $arrayData);
-            $this->set('rows', count($arrayData));
-            $this->log->writeLog("$this->tx rowCount:" . count($arrayData) . "\n");
-        } else {
-            $this->set('error', $db->getError());
-            $this->set('errorDescription', $db->getErrorDescription());
+        if ($db->getError() !== ERROR_CODE_SUCCESS) {
+            $this->setError($db->getError());
+            $this->setErrorDescription($db->getErrorDescription());
         }
-        $this->log->writeLog("$this->tx " . __FUNCTION__ . " end\n");
-        
         return $arrayData;
     }
 
@@ -85,10 +75,8 @@ class CapacityDAO extends BaseMethod
      */
     public function getReservedQuota(CapacityDTO $dto): int
     {
-        $this->log->writeLog("$this->tx " . __FUNCTION__ . "\n");
-
-        $this->set('error', ERROR_CODE_SUCCESS);
-        $this->set('errorDescription', ERROR_DESC_SUCCESS);
+        $this->setError(ERROR_CODE_SUCCESS);
+        $this->setErrorDescription(ERROR_DESC_SUCCESS);
 
         // Usar DatabaseConnection Singleton
         $db = DatabaseConnection::getInstance();
@@ -115,19 +103,12 @@ class CapacityDAO extends BaseMethod
         ];
 
         $row = $db->getRow($query, $params);
-
-        $reserved = 0;
-        if ($db->getError() === ERROR_CODE_SUCCESS) {
-            $reserved = isset($row['reserved']) ? (int)$row['reserved'] : 0;
-            $this->log->writeLog("$this->tx reserved:($reserved)\n");
-            $this->set('reserved', $reserved);
-        } else {
-            $this->set('error', $db->getError());
-            $this->set('errorDescription', $db->getErrorDescription());
+        if ($db->getError() !== ERROR_CODE_SUCCESS) {
+            $this->setError($db->getError());
+            $this->setErrorDescription($db->getErrorDescription());
         }
 
-        $this->log->writeLog("$this->tx " . __FUNCTION__ . " end\n");
-        return $reserved;
+        return $row['reserved'] ?? 0;
     }
 
     /**
@@ -138,10 +119,8 @@ class CapacityDAO extends BaseMethod
      */
     public function setReservedQuota(CapacityDTO $dto): int
     {
-        $this->log->writeLog("$this->tx " . __FUNCTION__ . "\n");
-
-        $this->set('error', ERROR_CODE_SUCCESS);
-        $this->set('errorDescription', ERROR_DESC_SUCCESS);
+        $this->setError(ERROR_CODE_SUCCESS);
+        $this->setErrorDescription(ERROR_DESC_SUCCESS);
 
         // Usar DatabaseConnection Singleton
         $db = DatabaseConnection::getInstance();
@@ -155,8 +134,8 @@ class CapacityDAO extends BaseMethod
         $periodo = $dto->getPeriodo();
 
         $query = "INSERT INTO " . SCHEMA_DB . ".QUOTA_RESERVED
-                      (reservedDate, capacityCategoryId, reservedQuota, minEntreViaje, poolId, periodo)
-                      VALUES(:date, :categoryId, :reserve, :minEntreViaje, :poolId, :periodo)";
+        (reservedDate, capacityCategoryId, reservedQuota, minEntreViaje, poolId, periodo)
+        VALUES(:date, :categoryId, :reserve, :minEntreViaje, :poolId, :periodo)";
 
         $params = [
             ':date' => $date,
@@ -168,13 +147,10 @@ class CapacityDAO extends BaseMethod
         ];
 
         $insertId = $db->addRow($query, $params);
-
         if ($db->getError() !== ERROR_CODE_SUCCESS) {
-            $this->set('error', $db->getError());
-            $this->set('errorDescription', $db->getErrorDescription());
+            $this->setError($db->getError());
+            $this->setErrorDescription($db->getErrorDescription());
         }
-
-        $this->log->writeLog("$this->tx " . __FUNCTION__ . " insertId: $insertId \n");
         return $insertId;
     }
 
@@ -187,8 +163,8 @@ class CapacityDAO extends BaseMethod
     public function getScheduleBlock(CapacityDTO $dto): int
     {
         $this->log->writeLog("$this->tx " . __FUNCTION__ . "\n");
-        $this->set('error', ERROR_CODE_SUCCESS);
-        $this->set('errorDescription', ERROR_DESC_SUCCESS);
+        $this->setError(ERROR_CODE_SUCCESS);
+        $this->setErrorDescription(ERROR_DESC_SUCCESS);
 
         // Usar DatabaseConnection Singleton
         $db = DatabaseConnection::getInstance();
@@ -213,19 +189,13 @@ class CapacityDAO extends BaseMethod
         ];
 
         $row = $db->getRow($query, $params);
-
-        $tieneBlock = 0;
-        if ($db->getError() === ERROR_CODE_SUCCESS) {
-            $tieneBlock = (int)($row['tieneBlock'] ?? 0);
-            $this->log->writeLog("$this->tx tieneBlock:($tieneBlock)\n");
-            $this->set('tieneBlock', $tieneBlock);
-        } else {
-            $this->set('error', $db->getError());
-            $this->set('errorDescription', $db->getErrorDescription());
+        if ($db->getError() !== ERROR_CODE_SUCCESS) {
+            $this->setError($db->getError());
+            $this->setErrorDescription($db->getErrorDescription());
         }
 
         $this->log->writeLog("$this->tx " . __FUNCTION__ . " end\n");
-        return $tieneBlock;
+        return (int)$row['tieneBlock'] ?? 0;
     }
 
     /**
@@ -236,11 +206,8 @@ class CapacityDAO extends BaseMethod
      */
     public function getDatesFromOrderToSchedule(CapacityDTO $dto): array
     {
-        $this->log->writeLog("$this->tx " . __FUNCTION__ . "\n");
-        $this->set('error', ERROR_CODE_SUCCESS);
-        $this->set('errorDescription', ERROR_DESC_SUCCESS);
-
-                // Usar DatabaseConnection Singleton
+        $this->setError(ERROR_CODE_SUCCESS);
+        $this->setErrorDescription(ERROR_DESC_SUCCESS);
         $db = DatabaseConnection::getInstance();
         $db->setTx($this->tx);
 
@@ -254,20 +221,15 @@ class CapacityDAO extends BaseMethod
 
         $params = [':id_order' => $id_order];
         $dates = [];
-
         $result = $db->getData($query, $params);
-
         if ($db->getError() === ERROR_CODE_SUCCESS) {
             foreach ($result as $row) {
                 $dates[] = $row['dateSelect'];
             }
-            $this->set('dateSelect', $dates);
         } else {
-            $this->set('error', $db->getError());
-            $this->set('errorDescription', $db->getErrorDescription());
+            $this->setError($db->getError());
+            $this->setErrorDescription($db->getErrorDescription());
         }
-
-        $this->log->writeLog("$this->tx " . __FUNCTION__ . " end\n");
         return $dates;
     }
 }

@@ -16,6 +16,11 @@ class CapacityBLL extends BaseMethod
     public function __construct()
     {
         $this->DAO = new CapacityDAO();
+        $this->log = new DayLog(API_HOME_PATH, 'API_CAPACITY');
+        $this->tx = substr(uniqid(), 5);
+
+        $this->DAO->setLog($this->log);
+        $this->DAO->setTx($this->tx);
     }
 
     /**
@@ -25,17 +30,6 @@ class CapacityBLL extends BaseMethod
      */
     public function getCapacity($body)
     {
-        // Usar log y tx inyectados desde el controlador, o crear nuevos si no existen
-        if (!$this->log) {
-            $this->log = new DayLog(API_HOME_PATH, 'API_' . __CLASS__ . '_' . __FUNCTION__);
-        }
-        if (!$this->tx) {
-            $this->tx = substr(uniqid(), 5);
-        }
-        
-        $this->DAO->set('log', $this->log);
-        $this->DAO->set('tx', $this->tx);
-
         $this->camposRequired = [
             'id_pool' => ['type' => 'integer'],
             'fechas' => ['type' => 'string'],
@@ -47,8 +41,7 @@ class CapacityBLL extends BaseMethod
 
         // Valido campos request
         $body = $this->validRequestFields($body);
-        $this->log->writeLog("$this->tx " . __FUNCTION__ . " Request: " . str_replace(array("\n", "\r", "\t"), array('', '', ''), print_r($body, true)) . "\n");
-        $this->log->writeLog("$this->tx " . __FUNCTION__ . " required: " . print_r($this->required, true) . "\n");
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " request: " . print_r(json_encode($body), true) . "\n");
 
         // Valido el request POST
         $this->validMethodPOST($body, $this->required, $this->notAvailables, $this->fieldsNotVarType);
@@ -71,15 +64,15 @@ class CapacityBLL extends BaseMethod
             $arrayCategory = $this->DAO->getCapacity($capacityDTO);
 
             $arrayFechaCategory = [];
-            if ($this->DAO->get('error') == ERROR_CODE_SUCCESS) {
+            if ($this->DAO->getError() == ERROR_CODE_SUCCESS) {
 
                 $this->log->writeLog("$this->tx cant minutos orden:(" . $body->cantidad . ")\n");
 
                 //////////////////////////////
                 // Obtengo la configuración de horas de viaje entre ordenes
                 $configDAO = new ConfigurationsDAO();
-                $configDAO->set('tx', $this->tx);
-                $configDAO->set('log', $this->log);
+                $configDAO->setTx($this->tx);
+                $configDAO->setLog($this->log);
                 $dataMinEntreViaje = $configDAO->getConfigByName('MIN_VIAJE_CLIENTE_ENTRE_ORDEN');
                 $minEntreViaje = (int) $dataMinEntreViaje['valor'] ?? 0;
                 $this->log->writeLog("$this->tx minEntreViaje: " . print_r($minEntreViaje, true) . "\n");
@@ -133,7 +126,7 @@ class CapacityBLL extends BaseMethod
                                 ]);
                                 
                                 $reserved = $this->DAO->getReservedQuota($reservedQuotaDTO); // obtiene la quota reservada para la fecha, categoria y pool especificados
-                                if ($this->DAO->get('error') == ERROR_CODE_SUCCESS) {
+                                if ($this->DAO->getError() == ERROR_CODE_SUCCESS) {
                                     $cuota = (float) $row['quota'];
                                     $keyReserva = $row['categoryId'] . $date;
                                     $this->log->writeLog("$this->tx KeyReserva " . $row['categoryId'] . " fecha:($keyReserva) " . print_r($arrayFechaCategory, true) . "\n");
@@ -158,8 +151,8 @@ class CapacityBLL extends BaseMethod
                     }
                 }
             } else {
-                $this->error = $this->DAO->get('error');
-                $this->errorDescription = $this->DAO->get('errorDescription');
+                $this->error = $this->DAO->getError();
+                $this->errorDescription = $this->DAO->getErrorDescription();
             }
         }
 
@@ -176,17 +169,6 @@ class CapacityBLL extends BaseMethod
      */
     public function schedule($body)
     {
-        // Usar log y tx inyectados desde el controlador, o crear nuevos si no existen
-        if (!$this->log) {
-            $this->log = new DayLog(API_HOME_PATH, 'API_' . __CLASS__ . '_' . __FUNCTION__);
-        }
-        if (!$this->tx) {
-            $this->tx = substr(uniqid(), 5);
-        }
-        
-        $this->DAO->set('log', $this->log);
-        $this->DAO->set('tx', $this->tx);
-
         $this->camposRequired = [
             'fecha' => ['type' => 'string'],
             'periodo' => ['type' => 'string'],
@@ -197,8 +179,7 @@ class CapacityBLL extends BaseMethod
 
         // Valido campos request
         $body = $this->validRequestFields($body);
-        $this->log->writeLog("$this->tx " . __FUNCTION__ . " " . str_replace(array("\n", "\r", "\t"), array('', '', ''), print_r($body, true)) . "\n");
-        $this->log->writeLog("$this->tx " . __FUNCTION__ . " required: " . print_r($this->required, true) . "\n");
+        $this->log->writeLog("$this->tx " . __FUNCTION__ . " request: " . print_r(json_encode($body), true) . "\n");
 
         // Valido el request POST
         $this->validMethodPOST($body, $this->required, $this->notAvailables, $this->fieldsNotVarType);
@@ -213,11 +194,11 @@ class CapacityBLL extends BaseMethod
                 'poolId' => (int) $body->id_pool,
                 'periodo' => trim(addslashes($body->periodo)),
                 'date' => $body->fecha,
-                'data' => (array) $body // Convertir objeto a array
+                'data' => (array)$body // Convertir objeto a array
             ]);
 
             $arrayCategory = $this->DAO->getCapacity($capacityDTO);
-            if ($this->DAO->get('error') == ERROR_CODE_SUCCESS) {
+            if ($this->DAO->getError() == ERROR_CODE_SUCCESS) {
 
                 $this->log->writeLog("$this->tx arrayCategory count:(" . count($arrayCategory) . ")\n");
                 if (count($arrayCategory) == 0) {
@@ -245,7 +226,7 @@ class CapacityBLL extends BaseMethod
                             ]);
                             
                             $currentReserved = $this->DAO->getReservedQuota($reservedQuotaDTO);
-                            if ($this->DAO->get('error') == ERROR_CODE_SUCCESS) {
+                            if ($this->DAO->getError() == ERROR_CODE_SUCCESS) {
                                 $sumReserva += (int) $currentReserved;
                             }
 
@@ -264,8 +245,8 @@ class CapacityBLL extends BaseMethod
                         //////////////////////////////
                         // Obtengo la configuración de horas de viaje entre ordenes
                         $configDAO = new ConfigurationsDAO();
-                        $configDAO->set('tx',$this->tx);
-                        $configDAO->set('log', $this->log);
+                        $configDAO->setTx($this->tx);
+                        $configDAO->setLog($this->log);
                         $dataMinEntreViaje = $configDAO->getConfigByName('MIN_VIAJE_CLIENTE_ENTRE_ORDEN');
                         $minEntreViaje = (int) $dataMinEntreViaje['valor'] ?? 0;
                         $minEntreViaje = $minEntreViaje / $iCapategory;
@@ -277,15 +258,17 @@ class CapacityBLL extends BaseMethod
                             $minOrder = $body->cantidad / $iCapategory;
                             foreach ($arrayIdCategories as $idCategory) {
                                 $setReservedDTO = new CapacityDTO([
-                                    'categoryId' => $row['categoryId'],
+                                    'categoryId' => $idCategory,
                                     'date' => $body->fecha,
                                     'poolId' => $capacityDTO->getPoolId(),
                                     'requestedAmount' => $body->cantidad,
                                     'minEntreViaje' => isset($body->minEntreViaje) ? (int) $body->minEntreViaje : 0,
                                     'periodo' => $capacityDTO->getPeriodo()
-                                ]);                                $this->DAO->setReservedQuota($setReservedDTO);
-                                $this->error = $this->DAO->get('error');
-                                $this->errorDescription = $this->DAO->get('errorDescription');
+                                ]);
+                                
+                                $this->DAO->setReservedQuota($setReservedDTO);
+                                $this->error = $this->DAO->getError();
+                                $this->errorDescription = $this->DAO->getErrorDescription();
                                 $this->log->writeLog("$this->tx setReservedQuota:" . $this->error . "\n");
                             }
 
@@ -300,13 +283,12 @@ class CapacityBLL extends BaseMethod
                     }
                 }
             } else {
-                $this->error = $this->DAO->get('error');
-                $this->errorDescription = $this->DAO->get('errorDescription');
-                $this->log->writeLog("$this->tx " . __FUNCTION__ . " ERROR: " . $this->DAO->get('error') . " " . $this->DAO->get('errorDescription') . "\n");
+                $this->error = $this->DAO->getError();
+                $this->errorDescription = $this->DAO->getErrorDescription();
+                $this->log->writeLog("$this->tx " . __FUNCTION__ . " ERROR: " . $this->DAO->getError() . " " . $this->DAO->getErrorDescription() . "\n");
             }
         }
 
-        // Generar respuesta JSON usando el método reutilizable
         $json = $this->setBuildResponse();
         $this->log->writeLog("$this->tx " . __FUNCTION__ . " response: " . print_r(json_encode($json), true) . "\n");
         return $json;

@@ -189,15 +189,15 @@ class DatabaseConnection
 
             if ($count > 0) {
                 $this->error = ERROR_CODE_SUCCESS;
-                $this->errorDescription = 'Existe registro';
+                $this->errorDescription = ERROR_DESC_SUCCESS;
             } else {
                 $this->error = ERROR_CODE_NOT_FOUND;
-                $this->errorDescription = 'No existe registro.';
+                $this->errorDescription = ERROR_DESC_NOT_FOUND;
             }
 
         } catch (\PDOException $e) {
             $this->error = ERROR_CODE_INTERNAL_SERVER;
-            $this->errorDescription = 'Error en ejecución de query.';
+            $this->errorDescription = ERROR_DESC_INTERNAL_SERVER;
             $this->log->writeLog("{$this->tx} [error query]: " . $e->getMessage() . "\n");
         }
 
