@@ -208,7 +208,7 @@ class CapacityBLL extends BaseMethod
                 'cantidad' => ['type' => 'integer'],
                 'id_pool' => ['type' => 'integer'],
             ];
-            $this->camposAvailables = array_keys($this->camposRequired);
+            $this->camposAvailables = array_merge(["categoria"], array_keys($this->camposRequired));
 
             // Valido campos request
             $body = $this->validRequestFields($body);
