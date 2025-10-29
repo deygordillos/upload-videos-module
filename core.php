@@ -114,10 +114,9 @@ $app->group('/core', function (RouteCollectorProxy $group) {
     
     $group->post('/schedule', function ($request, $response, array $args) {
         $body = (object)$request->getParsedBody();
-        $body->periodo = $body->periodo ? (int)$body->periodo : 0;
-        $body->cantidad = $body->cantidad ? (int)$body->cantidad : 0;
-        $body->id_pool = $body->id_pool ? (int)$body->id_pool : 0;
-        $body->id_order = $body->id_order ? (int)$body->id_order : 0;
+        $body->periodo = (int)$body->periodo ?? 0;
+        $body->cantidad = (int)$body->cantidad ?? 0;
+        $body->id_pool = (int)$body->id_pool ?? 0;
         // Crear instancia del BLL y pasar los componentes
         $class = new CapacityBLL();
         $returnObject = $class->schedule($body);

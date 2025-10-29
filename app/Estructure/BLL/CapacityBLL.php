@@ -206,7 +206,7 @@ class CapacityBLL extends BaseMethod
                 'fecha' => ['type' => 'string'],
                 'periodo' => ['type' => 'integer'],
                 'cantidad' => ['type' => 'integer'],
-                'id_pool' => ['type' => 'integer']
+                'id_pool' => ['type' => 'integer'],
             ];
             $this->camposAvailables = array_keys($this->camposRequired);
 
