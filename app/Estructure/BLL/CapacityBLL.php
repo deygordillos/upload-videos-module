@@ -204,7 +204,7 @@ class CapacityBLL extends BaseMethod
         try {
             $this->camposRequired = [
                 'fecha' => ['type' => 'string'],
-                'periodo' => ['type' => 'string'],
+                'periodo' => ['type' => 'integer'],
                 'cantidad' => ['type' => 'integer'],
                 'id_pool' => ['type' => 'integer']
             ];
@@ -328,7 +328,7 @@ class CapacityBLL extends BaseMethod
 
         } catch (\Throwable $e) {
             // Manejar cualquier error no controlado
-            $this->log->writeLog("$this->tx " . __FUNCTION__ . " EXCEPTION: " . $e->getMessage() . "\n");
+            $this->log->writeLog("$this->tx " . __FUNCTION__ . " EXCEPTION: " . $e->getMessage() . " " . $e->getLine() . "\n");
             $this->error = ERROR_CODE_INTERNAL_SERVER;
             $this->errorDescription = "Error interno del servidor";
             return $this->setBuildResponse();
