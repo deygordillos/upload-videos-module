@@ -35,15 +35,12 @@ sanity:
 # -------------------------
 install_deps:
   stage: deps
-  image: php:8.3-cli
+  image: composer:latest
   tags: ["docker"]
   rules:
     - when: always
-  before_script:
-    - apt-get update && apt-get install -y git unzip
-    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
   script:
-    - composer install --prefer-dist --optimize-autoloader
+    - composer install --prefer-dist --optimize-autoloader --ignore-platform-reqs
   artifacts:
     paths:
       - vendor/
@@ -58,7 +55,7 @@ install_deps:
 # -------------------------
 php_tests:
   stage: test
-  image: php:8.3-cli
+  image: composer:latest
   tags: ["docker"]
   rules:
     - when: always
@@ -78,7 +75,7 @@ php_tests:
 # -------------------------
 phpstan:
   stage: sast
-  image: php:8.3-cli
+  image: composer:latest
   tags: ["docker"]
   rules:
     - when: always
@@ -97,7 +94,7 @@ phpstan:
 # -------------------------
 phpcs:
   stage: sast
-  image: php:8.3-cli
+  image: composer:latest
   tags: ["docker"]
   rules:
     - when: always
@@ -135,14 +132,11 @@ gitleaks_scan:
 # -------------------------
 composer_audit:
   stage: security
-  image: php:8.3-cli
+  image: composer:latest
   tags: ["docker"]
   rules:
     - when: always
   needs: ["install_deps"]
-  before_script:
-    - apt-get update && apt-get install -y git unzip
-    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
   script:
     - composer audit --format=json | tee composer-audit.json || true
   artifacts:

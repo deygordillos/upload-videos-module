@@ -1,9 +1,8 @@
 <?php
 /**
- * Api - Capacity
+ * SDC - Upload Videos API
  * Slim 4 - Composer
- * CreatedAt: 15-09-2025 
- * @version 1.0 
+ * @version 1.0 11-12-2025 
  * @author Dey Gordillo <dey.gordillo@simpledatacorp.com>
  */
 
