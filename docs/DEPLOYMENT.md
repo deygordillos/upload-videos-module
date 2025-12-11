@@ -21,7 +21,7 @@
 
 ```bash
 git clone <repository-url>
-cd UPLOAD_VIDEOS_2
+cd sdc-video-upload-api
 ```
 
 ### 2. Configurar Variables de Entorno

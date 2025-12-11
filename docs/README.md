@@ -107,7 +107,7 @@ API REST para subir, gestionar y eliminar videos, con:
 ```bash
 # Clonar
 git clone <repo-url>
-cd UPLOAD_VIDEOS_2
+cd sdc-video-upload-api
 
 # Configurar
 cp .env.example .env
@@ -124,7 +124,7 @@ Ver [Quick Start](./QUICKSTART.md) para más detalles.
 ### Estructura de Carpetas
 
 ```
-UPLOAD_VIDEOS_2/
+sdc-video-upload-api/
 ├── app/                    # Código de aplicación
 │   ├── BLL/               # Business Logic Layer
 │   ├── DAO/               # Data Access Objects

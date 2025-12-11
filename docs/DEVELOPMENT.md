@@ -17,7 +17,7 @@
 
 ```bash
 git clone <repository-url>
-cd UPLOAD_VIDEOS_2
+cd sdc-video-upload-api
 ```
 
 #### 2. Instalar Dependencias
@@ -112,7 +112,7 @@ curl http://localhost:8270/v1/videos/health
 ## Estructura del Proyecto
 
 ```
-UPLOAD_VIDEOS_2/
+sdc-video-upload-api/
 ├── app/                          # Código de la aplicación
 │   ├── BLL/                      # Business Logic Layer
 │   │   └── VideoBLL.php          # Lógica de negocio para videos
@@ -196,10 +196,20 @@ git push origin feature/nombre-feature
 # Crear Pull Request en GitHub/GitLab
 ```
 
-### 2. Convenciones de Commits
+### 2. Convenciones de Commitsits:
 
-Seguir formato [Conventional Commits](https://www.conventionalcommits.org/):
+**Formato del Proyecto** (preferido):
+```
+[feature]: nueva funcionalidad
+[fix]: corrección de bug
+[docs]: cambios en documentación
+[style]: formateo, sin cambios de lógica
+[refactor]: refactorización sin cambiar funcionalidad
+[test]: añadir o modificar tests
+[chore]: cambios en build, config, etc.
+```
 
+**[Conventional Commits](https://www.conventionalcommits.org/)** (también aceptado):
 ```
 feat: nueva funcionalidad
 fix: corrección de bug
@@ -213,10 +223,13 @@ chore: cambios en build, config, etc.
 Ejemplos:
 
 ```bash
+# Formato del proyecto
+git commit -m "[feature]: add video thumbnail generation"
+git commit -m "[fix]: correct MIME type validation in VideoBLL"
+
+# Conventional Commits (también válido)
 git commit -m "feat: add video thumbnail generation"
 git commit -m "fix: correct MIME type validation in VideoBLL"
-git commit -m "docs: update API_REFERENCE with new endpoint"
-git commit -m "refactor: simplify VideoDAO query methods"
 ```
 
 ### 3. Code Review Checklist

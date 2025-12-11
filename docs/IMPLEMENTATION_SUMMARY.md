@@ -215,7 +215,7 @@ GET    /api/health                  - Health check
 ### Estructura Generada
 
 ```
-UPLOAD_VIDEOS_2/
+sdc-video-upload-api/
 ├── app/
 │   ├── BLL/
 │   │   └── VideoBLL.php                    ✅ Lógica de negocio

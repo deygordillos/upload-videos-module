@@ -1,5 +1,5 @@
 {
-  "name": "simpledatacorp/video-upload-api",
+  "name": "simpledatacorp/sdc-video-upload-api",
   "description": "Secure REST API for multi-project video management",
   "type": "project",
   "license": "SDC",
@@ -20,7 +20,8 @@
     "test:coverage": "phpunit --coverage-html coverage",
     "lint": "phpcs --standard=PSR12 app/",
     "lint:fix": "phpcbf --standard=PSR12 app/",
-    "analyse": "phpstan analyse --memory-limit=1G"
+    "analyse": "phpstan analyse --memory-limit=1G",
+    "phpstan": "phpstan analyse --memory-limit=1G"
   },
   "require": {
     "php": "^8.3.16",

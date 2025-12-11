@@ -83,7 +83,7 @@ Ver [API Reference](./docs/API_REFERENCE.md) para ejemplos completos.
 ```bash
 # 1. Clonar repositorio
 git clone <repository-url>
-cd UPLOAD_VIDEOS_2
+cd sdc-video-upload-api
 
 # 2. Configurar entorno
 cp .env.example .env
@@ -188,7 +188,7 @@ Ver [Testing Guide](./docs/TESTING_GUIDE.md) para más información
 2. Crear rama feature: `git checkout -b feature/nueva-funcionalidad`
 3. Hacer cambios siguiendo [Development Guide](./docs/DEVELOPMENT.md)
 4. Ejecutar tests: `composer test && composer phpstan`
-5. Commit siguiendo [Conventional Commits](https://www.conventionalcommits.org/)
+5. Commit: `[feature]: descripción` o `feat: descripción` ([Conventional Commits](https://www.conventionalcommits.org/))
 6. Push y crear Pull Request
 
 ### Estándares de Código

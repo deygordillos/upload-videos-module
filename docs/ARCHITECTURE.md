@@ -18,7 +18,7 @@ Este proyecto implementa una API RESTful para gestión de videos siguiendo el pa
 ## Estructura de Directorios
 
 ```
-UPLOAD_VIDEOS_2/
+sdc-video-upload-api/
 ├── app/
 │   ├── BaseClass.php              # Clase base para BLL
 │   ├── BaseComponent.php          # Clase base común para BLL y DAO

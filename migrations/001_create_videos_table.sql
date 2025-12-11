@@ -38,7 +38,7 @@ CREATE TABLE `videos` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Videos storage metadata table';
 
 -- Create audit log table
-CREATE TABLE `video_audit_log` (
+CREATE TABLE `videos_audit_log` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `video_id` BIGINT UNSIGNED NOT NULL,
   `action` VARCHAR(50) NOT NULL COMMENT 'Action performed (upload, update, delete, etc)',

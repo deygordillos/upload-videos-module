@@ -123,7 +123,6 @@ nb-configuration.xml
 .vscode/
 
 /results/
-/phpunit*.xml
 /.phpunit.*.cache
 
 *.ico

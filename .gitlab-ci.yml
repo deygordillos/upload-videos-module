@@ -43,7 +43,7 @@ install_deps:
     - apt-get update && apt-get install -y git unzip
     - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
   script:
-    - composer install --prefer-dist --no-dev --optimize-autoloader
+    - composer install --prefer-dist --optimize-autoloader
   artifacts:
     paths:
       - vendor/
@@ -63,20 +63,14 @@ php_tests:
   rules:
     - when: always
   needs: ["install_deps"]
-  before_script:
-    - apt-get update && apt-get install -y git unzip
-    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-    - composer install --prefer-dist
   script:
     - php -v
-    - ./vendor/bin/phpunit --colors=always --coverage-text --coverage-html=coverage
+    - composer test
   coverage: '/^\s*Lines:\s*\d+.\d+\%/'
   artifacts:
     when: always
     paths:
       - coverage/
-    reports:
-      junit: tests/junit.xml
     expire_in: 1 week
 
 # -------------------------
@@ -89,17 +83,14 @@ phpstan:
   rules:
     - when: always
   needs: ["install_deps"]
-  before_script:
-    - apt-get update && apt-get install -y bash git unzip
-    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-    - composer require --dev phpstan/phpstan
   script:
-    - ./vendor/bin/phpstan analyse --memory-limit=1G --error-format=gitlab > phpstan-report.json
+    - composer analyse
   artifacts:
-    reports:
-      codequality: phpstan-report.json
+    when: always
+    paths:
+      - phpstan-report.txt
     expire_in: 1 week
-  allow_failure: true
+  allow_failure: false
 
 # -------------------------
 # 🎯 5. Code style - PHPCS
@@ -111,15 +102,12 @@ phpcs:
   rules:
     - when: always
   needs: ["install_deps"]
-  before_script:
-    - apt-get update && apt-get install -y bash git unzip
-    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-    - composer require --dev squizlabs/php_codesniffer
   script:
-    - ./vendor/bin/phpcs --standard=PSR12 --report=checkstyle --report-file=phpcs-report.xml app/ || true
+    - composer lint || true
   artifacts:
-    reports:
-      codequality: phpcs-report.xml
+    when: always
+    paths:
+      - phpcs-report.txt
     expire_in: 1 week
   allow_failure: true
 
@@ -153,7 +141,7 @@ composer_audit:
     - when: always
   needs: ["install_deps"]
   before_script:
-    - apt-get update && apt-get install -y bash git unzip
+    - apt-get update && apt-get install -y git unzip
     - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
   script:
     - composer audit --format=json | tee composer-audit.json || true
