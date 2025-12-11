@@ -252,7 +252,7 @@ Respuesta esperada:
 {
   "status": {
     "code": 200,
-    "message": "API is running"
+    "description": "API is running"
   },
   "data": {
     "service": "Video Upload API",

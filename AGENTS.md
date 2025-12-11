@@ -149,7 +149,7 @@ Formato estándar:
 {
   "status": {
     "code": 200,
-    "message": "Success"
+    "description": "Success"
   },
   "data": { }
 }

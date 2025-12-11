@@ -18,14 +18,14 @@ class ApiResponseDTOTest extends TestCase
         $response = ApiResponseDTO::success($data, 'Operation successful', 200);
 
         $this->assertEquals(200, $response->code);
-        $this->assertEquals('Operation successful', $response->message);
+        $this->assertEquals('Operation successful', $response->description);
         $this->assertEquals($data, $response->data);
 
         $array = $response->toArray();
         $this->assertArrayHasKey('status', $array);
         $this->assertArrayHasKey('data', $array);
         $this->assertEquals(200, $array['status']['code']);
-        $this->assertEquals('Operation successful', $array['status']['message']);
+        $this->assertEquals('Operation successful', $array['status']['description']);
         $this->assertEquals($data, $array['data']);
     }
 
@@ -34,12 +34,12 @@ class ApiResponseDTOTest extends TestCase
         $response = ApiResponseDTO::error('Validation error', 400);
 
         $this->assertEquals(400, $response->code);
-        $this->assertEquals('Validation error', $response->message);
+        $this->assertEquals('Validation error', $response->description);
         $this->assertNull($response->data);
 
         $array = $response->toArray();
         $this->assertEquals(400, $array['status']['code']);
-        $this->assertEquals('Validation error', $array['status']['message']);
+        $this->assertEquals('Validation error', $array['status']['description']);
     }
 
     public function testErrorResponseWithData(): void
@@ -48,7 +48,7 @@ class ApiResponseDTOTest extends TestCase
         $response = ApiResponseDTO::error('Validation failed', 422, $errorData);
 
         $this->assertEquals(422, $response->code);
-        $this->assertEquals('Validation failed', $response->message);
+        $this->assertEquals('Validation failed', $response->description);
         $this->assertEquals($errorData, $response->data);
 
         $array = $response->toArray();
@@ -60,6 +60,6 @@ class ApiResponseDTOTest extends TestCase
         $response = ApiResponseDTO::success(['test' => 'data']);
 
         $this->assertEquals(200, $response->code);
-        $this->assertEquals('Success', $response->message);
+        $this->assertEquals('Success', $response->description);
     }
 }

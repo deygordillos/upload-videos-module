@@ -40,7 +40,6 @@ class VideoAuthMiddleware implements MiddlewareInterface
         
         if (empty($this->validApiKeys)) {
             $tx = substr(uniqid(), 3);
-            $this->log->setTx($tx);
             $this->log->writeLog("{$tx} [auth_warning] No valid API keys configured\n");
         }
     }
@@ -55,7 +54,6 @@ class VideoAuthMiddleware implements MiddlewareInterface
     public function process(Request $request, RequestHandlerInterface $handler): Response
     {
         $tx = substr(uniqid(), 3);
-        $this->log->setTx($tx);
         
         // Skip authentication for health check
         $uri = $request->getUri()->getPath();
@@ -196,13 +194,13 @@ class VideoAuthMiddleware implements MiddlewareInterface
 
     /**
      * Return unauthorized response
-     * @param string $message
+     * @param string $description
      * @param int $code
      * @return Response
      */
-    private function unauthorizedResponse(string $message, int $code): Response
+    private function unauthorizedResponse(string $description, int $code): Response
     {
-        $result = ApiResponseDTO::error($message, $code);
+        $result = ApiResponseDTO::error($description, $code);
         $response = new SlimResponse();
         $response->getBody()->write(json_encode($result->toArray()));
         

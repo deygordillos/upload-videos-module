@@ -7,11 +7,9 @@
  * @author Dey Gordillo <dey.gordillo@simpledatacorp.com>
  */
 
-use App\Estructure\BLL\CapacityBLL;
+use App\Routes\VideoRoutes;
 use App\Handlers\HttpErrorHandler;
 use App\Handlers\ShutdownHandler;
-use App\Utils\DayLog;
-use App\Routes\VideoRoutes;
 use App\Middleware\VideoAuthMiddleware;
 
 use Psr\Http\Message\ResponseInterface as Response;
@@ -32,11 +30,23 @@ try {
 require_once dirname(__FILE__) . '/config.php';
 
 // Set that to your needs
-$displayErrorDetails = true;
+$displayErrorDetails = APP_DEBUG === 'true' ? true : false;
 
 $app = AppFactory::create();
-$app->setBasePath($_ENV['APP_PATH'] ?? '/');
-//$app->setBasePath('/whatsapp/rest/v1');
+
+// Detectar basePath automáticamente o usar el configurado en .env
+if (isset($_ENV['APP_PATH']) && $_ENV['APP_PATH'] !== '' && $_ENV['APP_PATH'] !== '/') {
+    $app->setBasePath($_ENV['APP_PATH']);
+} else {
+    // Detectar automáticamente desde SCRIPT_NAME
+    // Si SCRIPT_NAME es /liv/komatsu/cl/v0.00.dev/core.php
+    // entonces basePath debe ser /liv/komatsu/cl/v0.00.dev
+    $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+    $basePath = dirname($scriptName);
+    if ($basePath !== '/' && $basePath !== '\\' && $basePath !== '.') {
+        $app->setBasePath($basePath);
+    }
+}
 
 $callableResolver = $app->getCallableResolver();
 $responseFactory = $app->getResponseFactory();
@@ -105,6 +115,6 @@ try {
     http_response_code(400);
     echo json_encode([
         "code" => 400, 
-        "message" => sprintf('Bad Request: %s', $exception->getMessage())
+        "description" => sprintf('Bad Request: %s', $exception->getMessage())
     ]);
 }

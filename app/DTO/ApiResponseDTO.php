@@ -14,7 +14,7 @@ final class ApiResponseDTO
 {
     public function __construct(
         public readonly int $code,
-        public readonly string $message,
+        public readonly string $description,
         public readonly mixed $data = null
     ) {
     }
@@ -28,7 +28,7 @@ final class ApiResponseDTO
         return [
             'status' => [
                 'code' => $this->code,
-                'message' => $this->message,
+                'description' => $this->description,
             ],
             'data' => $this->data,
         ];
@@ -37,24 +37,24 @@ final class ApiResponseDTO
     /**
      * Create success response
      * @param mixed $data
-     * @param string $message
+     * @param string $description
      * @param int $code
      * @return self
      */
-    public static function success(mixed $data = null, string $message = 'Success', int $code = 200): self
+    public static function success(mixed $data = null, string $description = 'Success', int $code = 200): self
     {
-        return new self($code, $message, $data);
+        return new self($code, $description, $data);
     }
 
     /**
      * Create error response
-     * @param string $message
+     * @param string $description
      * @param int $code
      * @param mixed $data
      * @return self
      */
-    public static function error(string $message, int $code = 400, mixed $data = null): self
+    public static function error(string $description, int $code = 400, mixed $data = null): self
     {
-        return new self($code, $message, $data);
+        return new self($code, $description, $data);
     }
 }

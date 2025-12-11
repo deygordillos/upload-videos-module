@@ -2,10 +2,9 @@
 date_default_timezone_set('America/Santiago');
 error_reporting(E_ALL & ~E_DEPRECATED);
 
-define('AMBIENTE','v1');
-define('API_HOME_PATH', dirname(__FILE__) . '/'); 
-define('BASE_HOME_PATH', API_HOME_PATH);
-define('LOG_PATH', API_HOME_PATH . 'log/');
+define('APP_DEBUG', $_ENV['APP_DEBUG'] ?? 'false');
+define('BASE_HOME_PATH', dirname(__FILE__) . '/'); 
+define('LOG_PATH', BASE_HOME_PATH . 'log/');
 
 ini_set("log_errors", 1);
 ini_set("error_log", LOG_PATH . "/php-error-".date("Ymd").".log");
@@ -13,9 +12,7 @@ ini_set("error_log", LOG_PATH . "/php-error-".date("Ymd").".log");
 /**
  * Links
  */
-//define('URL_WS_MEU_PERU', 'https://pe-ws-meucust.simpledatacorp.com/TDC.php?wsdl'); 
-define('URL_WEB_PRINCIPAL', 'https://consent.simpledatacorp.com');
-define('URL_WEB_SIMPLEDATA', 'https://www.simpledata.solutions');
+define('URL_WEB_SIMPLEDATA', 'https://www.simpledatacorp.com');
 define('PREFIX_FONO_PAIS', 56);
 
 /**
@@ -24,7 +21,7 @@ define('PREFIX_FONO_PAIS', 56);
 define('USER_DB', $_ENV['BDD_USER'] ?? '');
 define('PASS_DB', $_ENV['BDD_PASS'] ?? '');
 define('HOST_DB', $_ENV['BDD_HOST'] ?? '');
-define('PORT_DB', $_ENV['BDD_PORT'] ?? 3306);
+define('PORT_DB', (int)($_ENV['BDD_PORT'] ?? 3306));
 define('SCHEMA_DB', $_ENV['BDD_SCHEMA'] ?? '');
 
 /**

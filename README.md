@@ -188,7 +188,7 @@ curl -X POST https://api-upload.simpledatacorp.com/v1/videos/upload \
 {
   "status": {
     "code": 201,
-    "message": "Video uploaded successfully"
+    "description": "Video uploaded successfully"
   },
   "data": {
     "id": 1,
@@ -213,7 +213,7 @@ curl -X POST https://api-upload.simpledatacorp.com/v1/videos/upload \
 {
   "status": {
     "code": 200,
-    "message": "Success"
+    "description": "Success"
   },
   "data": {
     "id": 1,
@@ -236,7 +236,7 @@ curl -X POST https://api-upload.simpledatacorp.com/v1/videos/upload \
 {
   "status": {
     "code": 200,
-    "message": "Success"
+    "description": "Success"
   },
   "data": {
     "videos": [...],
@@ -258,7 +258,7 @@ curl -X POST https://api-upload.simpledatacorp.com/v1/videos/upload \
 {
   "status": {
     "code": 200,
-    "message": "Video deleted successfully"
+    "description": "Video deleted successfully"
   },
   "data": null
 }
@@ -273,7 +273,7 @@ curl -X POST https://api-upload.simpledatacorp.com/v1/videos/upload \
 {
   "status": {
     "code": 200,
-    "message": "API is running"
+    "description": "API is running"
   },
   "data": {
     "service": "Video Upload API",

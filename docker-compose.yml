@@ -6,7 +6,7 @@ services:
     container_name: sdc_upload_videos_api
     build: .
     ports:
-      - "8260:80"
+      - "8270:80"
     volumes:
       - .:/api
     working_dir: /api

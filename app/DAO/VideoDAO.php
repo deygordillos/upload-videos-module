@@ -6,9 +6,6 @@ namespace App\DAO;
 
 use App\DTO\VideoUploadDTO;
 use App\DTO\VideoResponseDTO;
-use Libraries\DBConnectorPDO;
-use PDO;
-use PDOException;
 
 /**
  * Video Data Access Object

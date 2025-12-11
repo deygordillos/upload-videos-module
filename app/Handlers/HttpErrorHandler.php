@@ -59,11 +59,11 @@ class HttpErrorHandler extends ErrorHandler
         }
 
         $error = [
-            'statusCode' => $statusCode,
-            'error' => [
-                'type' => $type,
-                'description' => $description,
-            ],
+            "status" => [
+                "code" => $statusCode,
+                "type" => $type,
+                "description" => $description,
+            ]
         ];
         
         $payload = json_encode($error, JSON_PRETTY_PRINT);

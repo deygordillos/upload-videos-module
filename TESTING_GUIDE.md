@@ -71,7 +71,7 @@ curl -X GET http://localhost/api/videos/health
 {
   "status": {
     "code": 200,
-    "message": "API is running"
+    "description": "API is running"
   },
   "data": {
     "service": "Video Upload API",
@@ -104,7 +104,7 @@ curl -X POST http://localhost/api/videos/upload \
 {
   "status": {
     "code": 201,
-    "message": "Video uploaded successfully"
+    "description": "Video uploaded successfully"
   },
   "data": {
     "id": 1,
@@ -145,7 +145,7 @@ curl -X GET http://localhost/api/videos/1 \
 {
   "status": {
     "code": 200,
-    "message": "OK"
+    "description": "OK"
   },
   "data": {
     "id": 1,
@@ -166,7 +166,7 @@ curl -X GET http://localhost/api/videos/1 \
 {
   "status": {
     "code": 404,
-    "message": "Video not found"
+    "description": "Video not found"
   },
   "data": null
 }
@@ -191,7 +191,7 @@ curl -X GET "http://localhost/api/videos/project/PROJECT_001?page=1&per_page=10"
 {
   "status": {
     "code": 200,
-    "message": "OK"
+    "description": "OK"
   },
   "data": {
     "videos": [
@@ -240,7 +240,7 @@ curl -X DELETE http://localhost/api/videos/1 \
 {
   "status": {
     "code": 200,
-    "message": "Video deleted successfully"
+    "description": "Video deleted successfully"
   },
   "data": null
 }
@@ -349,7 +349,7 @@ curl -X POST http://localhost/api/videos/upload \
 {
   "status": {
     "code": 409,
-    "message": "Video with this identifier already exists for this project"
+    "description": "Video with this identifier already exists for this project"
   },
   "data": {
     "existing_video_id": 1
@@ -375,7 +375,7 @@ curl -X POST http://localhost/api/videos/upload \
 {
   "status": {
     "code": 400,
-    "message": "File size exceeds maximum allowed (500MB)"
+    "description": "File size exceeds maximum allowed (500MB)"
   },
   "data": null
 }
@@ -396,7 +396,7 @@ curl -X POST http://localhost/api/videos/upload \
 {
   "status": {
     "code": 400,
-    "message": "File extension not allowed. Allowed: mp4, mov, avi, wmv, webm, mkv"
+    "description": "File extension not allowed. Allowed: mp4, mov, avi, wmv, webm, mkv"
   },
   "data": null
 }
@@ -418,7 +418,7 @@ done
 {
   "status": {
     "code": 429,
-    "message": "Rate limit exceeded"
+    "description": "Rate limit exceeded"
   },
   "data": {
     "retry_after": 30
