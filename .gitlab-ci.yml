@@ -64,11 +64,6 @@ php_tests:
     - php -v
     - composer test
   coverage: '/^\s*Lines:\s*\d+.\d+\%/'
-  artifacts:
-    when: always
-    paths:
-      - coverage/
-    expire_in: 1 week
 
 # -------------------------
 # 🔍 4. SAST - PHPStan
