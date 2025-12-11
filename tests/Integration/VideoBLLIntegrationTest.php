@@ -74,6 +74,16 @@ class VideoBLLIntegrationTest extends TestCase
         // Execute upload
         $result = $this->videoBLL->uploadVideo($videoDTO);
 
+        // Debug output if test fails
+        if ($result->code !== 201) {
+            echo "\nDEBUG - Upload failed:\n";
+            echo "Code: {$result->code}\n";
+            echo "Description: {$result->description}\n";
+            if (isset($result->data)) {
+                echo "Data: " . json_encode($result->data) . "\n";
+            }
+        }
+
         // Assertions
         $this->assertInstanceOf(\App\DTO\ApiResponseDTO::class, $result);
         $this->assertEquals(201, $result->code, 'Upload should return 201 status');
@@ -102,7 +112,11 @@ class VideoBLLIntegrationTest extends TestCase
         $tempFile = tempnam(sys_get_temp_dir(), 'test_');
         file_put_contents($tempFile, 'This is not a video');
 
-        // Create VideoUploadDTO with invalid MIME type
+        // Expect InvalidArgumentException when creating DTO with invalid MIME type
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupported video MIME type');
+
+        // Create VideoUploadDTO with invalid MIME type (should throw exception)
         $videoDTO = new \App\DTO\VideoUploadDTO(
             projectId: 'PROJECT_CI_TEST',
             videoIdentifier: 'VIDEO_INVALID',
@@ -111,13 +125,6 @@ class VideoBLLIntegrationTest extends TestCase
             fileSize: filesize($tempFile),
             mimeType: 'text/plain'
         );
-
-        $result = $this->videoBLL->uploadVideo($videoDTO);
-
-        // Should return error
-        $this->assertInstanceOf(\App\DTO\ApiResponseDTO::class, $result);
-        $this->assertNotEquals(201, $result->code);
-        $this->assertNotEmpty($result->description);
 
         // Cleanup
         @unlink($tempFile);
@@ -129,7 +136,11 @@ class VideoBLLIntegrationTest extends TestCase
         $tempFile = tempnam(sys_get_temp_dir(), 'test_');
         file_put_contents($tempFile, 'dummy content');
 
-        // Create VideoUploadDTO with empty/missing identifier
+        // Expect InvalidArgumentException when creating DTO with empty identifier
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Video identifier must be between 1 and 100 characters');
+
+        // Create VideoUploadDTO with empty identifier (should throw exception)
         $videoDTO = new \App\DTO\VideoUploadDTO(
             projectId: 'PROJECT_CI_TEST',
             videoIdentifier: '', // Empty identifier should fail validation
@@ -138,12 +149,6 @@ class VideoBLLIntegrationTest extends TestCase
             fileSize: filesize($tempFile),
             mimeType: 'video/mp4'
         );
-
-        $result = $this->videoBLL->uploadVideo($videoDTO);
-
-        // Should return validation error
-        $this->assertInstanceOf(\App\DTO\ApiResponseDTO::class, $result);
-        $this->assertNotEquals(201, $result->code);
 
         // Cleanup
         @unlink($tempFile);
