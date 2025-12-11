@@ -8,7 +8,7 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "http://localhost:8270/api",
+      "value": "http://localhost:8270",
       "type": "string"
     },
     {
@@ -24,9 +24,9 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{base_url}}/health",
+          "raw": "{{base_url}}/v1/videos/health",
           "host": ["{{base_url}}"],
-          "path": ["health"]
+          "path": ["v1", "videos", "health"]
         },
         "description": "Verifica el estado del servicio y la conexión a la base de datos"
       }
@@ -72,9 +72,9 @@
           ]
         },
         "url": {
-          "raw": "{{base_url}}/videos/upload",
+          "raw": "{{base_url}}/v1/videos/upload",
           "host": ["{{base_url}}"],
-          "path": ["videos", "upload"]
+          "path": ["v1", "videos", "upload"]
         },
         "description": "Sube un nuevo video al sistema"
       }
@@ -91,9 +91,9 @@
           }
         ],
         "url": {
-          "raw": "{{base_url}}/videos/1",
+          "raw": "{{base_url}}/v1/videos/1",
           "host": ["{{base_url}}"],
-          "path": ["videos", "1"],
+          "path": ["v1", "videos", "1"],
           "variable": [
             {
               "key": "id",
@@ -117,9 +117,9 @@
           }
         ],
         "url": {
-          "raw": "{{base_url}}/videos/project/PROJECT_TEST?page=1&per_page=50",
+          "raw": "{{base_url}}/v1/videos/project/PROJECT_TEST?page=1&per_page=50",
           "host": ["{{base_url}}"],
-          "path": ["videos", "project", "PROJECT_TEST"],
+          "path": ["v1", "videos", "project", "PROJECT_TEST"],
           "query": [
             {
               "key": "page",
@@ -155,9 +155,9 @@
           }
         ],
         "url": {
-          "raw": "{{base_url}}/videos/1",
+          "raw": "{{base_url}}/v1/videos/1",
           "host": ["{{base_url}}"],
-          "path": ["videos", "1"],
+          "path": ["v1", "videos", "1"],
           "variable": [
             {
               "key": "id",
@@ -195,9 +195,9 @@
           ]
         },
         "url": {
-          "raw": "{{base_url}}/videos/upload",
+          "raw": "{{base_url}}/v1/videos/upload",
           "host": ["{{base_url}}"],
-          "path": ["videos", "upload"]
+          "path": ["v1", "videos", "upload"]
         },
         "description": "Prueba de error - Sin API Key (debe retornar 401)"
       }
@@ -234,9 +234,9 @@
           ]
         },
         "url": {
-          "raw": "{{base_url}}/videos/upload",
+          "raw": "{{base_url}}/v1/videos/upload",
           "host": ["{{base_url}}"],
-          "path": ["videos", "upload"]
+          "path": ["v1", "videos", "upload"]
         },
         "description": "Prueba de error - API Key inválido (debe retornar 401)"
       }
@@ -263,9 +263,9 @@
           ]
         },
         "url": {
-          "raw": "{{base_url}}/videos/upload",
+          "raw": "{{base_url}}/v1/videos/upload",
           "host": ["{{base_url}}"],
-          "path": ["videos", "upload"]
+          "path": ["v1", "videos", "upload"]
         },
         "description": "Prueba de error - Campos requeridos faltantes (debe retornar 400)"
       }
@@ -282,9 +282,9 @@
           }
         ],
         "url": {
-          "raw": "{{base_url}}/videos/99999",
+          "raw": "{{base_url}}/v1/videos/99999",
           "host": ["{{base_url}}"],
-          "path": ["videos", "99999"]
+          "path": ["v1", "videos", "99999"]
         },
         "description": "Prueba de error - Video no encontrado (debe retornar 404)"
       }

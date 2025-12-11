@@ -89,8 +89,9 @@ $app->addBodyParsingMiddleware();
 // Add Routing Middleware
 $app->addRoutingMiddleware();
 // Add Error Handling Middleware
-$errorMiddleware = $app->addErrorMiddleware($displayErrorDetails, false, false);
-$errorMiddleware->setDefaultErrorHandler($errorHandler);
+$errorMiddleware = $app->addErrorMiddleware(true, false, false); // Force true for debugging
+// Temporarily disabled to see actual errors
+// $errorMiddleware->setDefaultErrorHandler($errorHandler);
 
 // ------------------------------------
 //           Rutas

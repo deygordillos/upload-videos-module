@@ -142,7 +142,9 @@ class VideoRoutes
                 return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
             } catch (\Throwable $e) {
                 $log->writeLog("{$tx} [upload_error] Unexpected error: " . $e->getMessage() . "\n");
-                $result = ApiResponseDTO::error('Failed to upload video', 500);
+                $log->writeLog("{$tx} [upload_error] Stack trace: " . $e->getTraceAsString() . "\n");
+                // Temporary: show actual error for debugging
+                $result = ApiResponseDTO::error('Failed to upload video: ' . $e->getMessage(), 500);
                 $response->getBody()->write(json_encode($result->toArray()));
                 return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
             }

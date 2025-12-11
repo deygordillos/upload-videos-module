@@ -82,6 +82,8 @@ abstract class BaseComponent
      * @return \stdClass Respuesta del servicio
      */
     public function requestEndpoint1($soapUrl = '', $headerProperties = [], $propertiesValues = []) {
+        $operation = $headerProperties['Operation'] ?? 'unknown';
+        
         $return = new \stdClass;
         $return->errno = 1;
         $return->error = 'Not executed';
@@ -91,8 +93,6 @@ abstract class BaseComponent
         $return->time = 0;
         try {
             $this->log->writeLog("{$this->tx} ". __FUNCTION__ ." url: {$soapUrl} header: " . json_encode($headerProperties) . " properties: " . json_encode($propertiesValues) . "\n");
-
-            $operation  = $headerProperties['Operation'] ?? '';
             $idUser     = $headerProperties['idUser'] ?? '';
             $latitude   = $headerProperties['Latitude'] ?? '';
             $longitude  = $headerProperties['Longitude'] ?? '';
@@ -171,9 +171,7 @@ abstract class BaseComponent
             unset($response, $xml_post_string);
             curl_close($ch);
         } catch (\Throwable $th) {
-            $this->log->writeLog("{$this->tx} SOAP ".$operation." Throwable: " . print_r($th->getMessage(), true) . "\n");
-        } catch (\Exception $e) {
-            $this->log->writeLog("{$this->tx} SOAP ".$operation." Exception: " . print_r($e->getMessage(), true) . "\n");
+            $this->log->writeLog("{$this->tx} SOAP ".$operation." Error: " . print_r($th->getMessage(), true) . "\n");
         }
         return $return;
     }

@@ -32,6 +32,12 @@ class ApiAuthMiddlewareTest extends TestCase
         unset($_SERVER['HTTP_X_API_KEY']);
         unset($_SERVER['HTTP_AUTHORIZATION']);
         
+        // Reset rate limit cache using reflection
+        $reflection = new \ReflectionClass(ApiAuthMiddleware::class);
+        $property = $reflection->getProperty('rateLimitCache');
+        $property->setAccessible(true);
+        $property->setValue(null, []);
+        
         parent::tearDown();
     }
 
@@ -87,15 +93,19 @@ class ApiAuthMiddlewareTest extends TestCase
         
         $middleware = new ApiAuthMiddleware($this->log, $this->tx);
         
-        // Make 60 requests (the limit)
-        for ($i = 0; $i < 60; $i++) {
+        // Make 59 requests (just under the limit)
+        for ($i = 0; $i < 59; $i++) {
             $result = $middleware->authenticate();
             $this->assertTrue($result['authenticated'], "Request {$i} should succeed");
         }
         
-        // 61st request should fail
+        // 60th request should succeed (exactly at limit)
         $result = $middleware->authenticate();
-        $this->assertFalse($result['authenticated']);
+        $this->assertTrue($result['authenticated'], "Request 60 should succeed (at limit)");
+        
+        // 61st request should fail (over limit)
+        $result = $middleware->authenticate();
+        $this->assertFalse($result['authenticated'], "Request 61 should fail (over limit)");
         $this->assertEquals(429, $result['code']);
         $this->assertStringContainsString('Rate limit exceeded', $result['error']);
     }

@@ -47,35 +47,13 @@ class BaseClass extends BaseComponent
         return $this->response;
     }
 
-    protected function setErrorResponse(string $errorDescription = "", int $error = 500, array $xmlResponse = []): array
+    protected function setErrorResponse(string $errorDescription = "", string $error = "500", array $xmlResponse = []): array
     {
         $this->setError($error);
         $this->setErrorDescription($errorDescription);
         return $this->setBuildResponse($xmlResponse);
     }
 
-    protected function verifyToken(string $token, int $idUser): array
-    {
-        $tx = substr(uniqid(), 3);
-        $LoginDAO = new LoginUserDAO($this->db);
-        $LoginDAO->setLog($this->log);
-        $LoginDAO->setTx($tx);
-
-        $this->log->writeLog("$tx verifyToken Init - Token: $token, User: $idUser\n");
-
-        $response = ["Code" => 0, "Description" => 'Sesión activa y sin bloqueos'];
-
-        if (!$LoginDAO->IsCurrentSession($token, $idUser)) {
-            $response = ["Code" => 101, "Description" => 'Se ha iniciado sesión desde un dispositivo diferente, favor volver a iniciar sesión.'];
-        } elseif (!$LoginDAO->IsActiveUser($idUser)) {
-            $response = ["Code" => 101, "Description" => 'Su usuario se encuentra bloqueado. Posiblemente su licencia expiró, favor comunicarse con el administrador.'];
-        }
-
-        $this->log->writeLog("$tx verifyToken Response: " . json_encode($response) . "\n");
-        return $response;
-    }
-    
-    
     /**
      * Request a Endpoint 1
      * Estructura Base de Properties -> Values
@@ -87,6 +65,8 @@ class BaseClass extends BaseComponent
      * ]
      */
     public function requestEndpoint1($soapUrl = '', $headerProperties = [], $propertiesValues = []) {
+        $operation = $headerProperties['Operation'] ?? 'unknown';
+        
         $return = new \stdClass;
         $return->errno = 1;
         $return->error = 'Not executed';
@@ -96,8 +76,6 @@ class BaseClass extends BaseComponent
         $return->time = 0;
         try {
             $this->log->writeLog("{$this->tx} ". __FUNCTION__ ." url: {$soapUrl} header: " . json_encode($headerProperties) . " properties: " . json_encode($propertiesValues) . "\n");
-
-            $operation  = $headerProperties['Operation'] ?? '';
             $idUser     = $headerProperties['idUser'] ?? '';
             $latitude   = $headerProperties['Latitude'] ?? '';
             $longitude  = $headerProperties['Longitude'] ?? '';
@@ -177,9 +155,7 @@ class BaseClass extends BaseComponent
             unset($response, $xml_post_string);
             curl_close($ch);
         } catch (\Throwable $th) {
-            $this->log->writeLog("{$this->tx} SOAP ".$operation." Throwable: " . print_r($th->getMessage(), true) . "\n");
-        } catch (\Exception $e) {
-            $this->log->writeLog("{$this->tx} SOAP ".$operation." Exception: " . print_r($e->getMessage(), true) . "\n");
+            $this->log->writeLog("{$this->tx} SOAP ".$operation." Error: " . print_r($th->getMessage(), true) . "\n");
         }
         return $return;
     }

@@ -39,7 +39,7 @@ abstract class BaseDAO extends BaseComponent
             return $result;
             
         } catch (\Throwable $e) {
-            $this->setError(ERROR_CODE_500);
+            $this->setError(ERROR_CODE_INTERNAL_SERVER);
             $this->setErrorDescription("Error en consulta: " . $e->getMessage());
             return [];
         }

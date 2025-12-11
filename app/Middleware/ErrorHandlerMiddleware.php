@@ -2,7 +2,6 @@
 
 namespace App\Middleware;
 
-use App\Factory\LoggerFactory;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -15,20 +14,18 @@ use Psr\Log\LoggerInterface;
 final class ErrorHandlerMiddleware implements MiddlewareInterface
 {
     /**
-     * @var LoggerInterface
+     * @var LoggerInterface|null
      */
-    private $logger;
+    private ?LoggerInterface $logger;
 
     /**
      * The constructor.
      *
-     * @param LoggerFactory $loggerFactory The logger
+     * @param LoggerInterface|null $logger The logger
      */
-    public function __construct(LoggerFactory $loggerFactory)
+    public function __construct(?LoggerInterface $logger = null)
     {
-        $this->logger = $loggerFactory
-            ->addFileHandler('errors.log')
-            ->createInstance('error_handler_middleware');
+        $this->logger = $logger;
     }
 
     /**
@@ -49,22 +46,24 @@ final class ErrorHandlerMiddleware implements MiddlewareInterface
         // Set custom php error handler
         set_error_handler(
             function ($errno, $errstr, $errfile, $errline) {
-                switch ($errno) {
-                    case E_USER_ERROR:
-                        $this->logger->error(
-                            "Error number [$errno] $errstr on line $errline in file $errfile"
-                        );
-                        break;
-                    case E_USER_WARNING:
-                        $this->logger->warning(
-                            "Error number [$errno] $errstr on line $errline in file $errfile"
-                        );
-                        break;
-                    default:
-                        $this->logger->notice(
-                            "Error number [$errno] $errstr on line $errline in file $errfile"
-                        );
-                        break;
+                if ($this->logger !== null) {
+                    switch ($errno) {
+                        case E_USER_ERROR:
+                            $this->logger->error(
+                                "Error number [$errno] $errstr on line $errline in file $errfile"
+                            );
+                            break;
+                        case E_USER_WARNING:
+                            $this->logger->warning(
+                                "Error number [$errno] $errstr on line $errline in file $errfile"
+                            );
+                            break;
+                        default:
+                            $this->logger->notice(
+                                "Error number [$errno] $errstr on line $errline in file $errfile"
+                            );
+                            break;
+                    }
                 }
 
                 // Don't execute PHP internal error handler

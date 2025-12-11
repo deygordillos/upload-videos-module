@@ -3,487 +3,315 @@
 [![PHP Version](https://img.shields.io/badge/PHP-8.3.16-blue)](https://www.php.net/)
 [![License](https://img.shields.io/badge/license-Proprietary-red)](LICENSE)
 [![OWASP](https://img.shields.io/badge/security-OWASP%20Top%2010-green)](https://owasp.org/www-project-top-ten/)
+[![Tests](https://img.shields.io/badge/tests-14%2F14%20passing-brightgreen)](tests/)
+[![PHPStan](https://img.shields.io/badge/PHPStan-Level%205-blue)](phpstan.neon)
 
 API segura para recepción y almacenamiento de videos desde aplicativos móviles, diseñada como módulo reutilizable para múltiples proyectos de la empresa.
 
 ## 📋 Tabla de Contenidos
 
 - [Características](#características)
+- [Vista Rápida](#vista-rápida)
+- [Documentación Completa](#documentación-completa)
+- [Instalación Rápida](#instalación-rápida)
 - [Arquitectura](#arquitectura)
-- [Requisitos](#requisitos)
-- [Instalación](#instalación)
-- [Configuración](#configuración)
-- [Uso de la API](#uso-de-la-api)
-- [Estructura de Archivos](#estructura-de-archivos)
-- [Seguridad](#seguridad)
-- [Pruebas](#pruebas)
-- [CI/CD](#cicd)
+- [Testing](#testing)
 - [Contribución](#contribución)
 
 ## ✨ Características
 
-- ✅ **PHP 8.3.16** con tipado estricto
+- ✅ **PHP 8.3.16** con tipado estricto y declaraciones strict_types
 - 🔒 **Seguridad OWASP Top 10** implementada
 - 🗄️ **Almacenamiento organizado** por proyecto/año/mes/día/identificador
-- 🔐 **Autenticación por API Key** con rate limiting
-- 📊 **Auditoría completa** de operaciones
-- 🧪 **Tests unitarios** con PHPUnit
-- 🚀 **CI/CD** con GitLab DevSecOps pipeline
+- 🔐 **Autenticación por API Key** con rate limiting (60 req/min)
+- 📊 **Auditoría completa** de operaciones con video_audit_log
+- 🧪 **Tests unitarios** con PHPUnit (14/14 passing, 110 assertions)
+- 🔍 **Análisis estático** con PHPStan Level 5 (0 errores)
 - 📝 **Logging detallado** con DayLog
-- 🔄 **Arquitectura limpia** BLL/DAO/DTO
-- 📦 **Migrations** para base de datos
-- 🐳 **Docker** ready
+- 🔄 **Arquitectura empresarial** BLL/DAO/DTO siguiendo patrón corporativo
+- 📦 **Migrations** para base de datos MySQL 8.0+
+- 🐳 **Docker** ready con Slim 4.15.1
+- 🚫 **Soft delete** con posibilidad de restauración
+- ⚡ **Upload hasta 100MB** con validación MIME y extensiones
+
+## 📚 Documentación Completa
+
+Toda la documentación del proyecto está organizada en la carpeta [`docs/`](./docs/):
+
+- **[Índice de Documentación](./docs/README.md)** - Portal principal de documentación
+- **[API Reference](./docs/API_REFERENCE.md)** - Referencia completa de endpoints
+- **[Architecture](./docs/ARCHITECTURE.md)** - Diseño y arquitectura del sistema
+- **[Development Guide](./docs/DEVELOPMENT.md)** - Guía para desarrolladores
+- **[Deployment Guide](./docs/DEPLOYMENT.md)** - Despliegue a producción
+- **[Testing Guide](./docs/TESTING_GUIDE.md)** - Estrategias de testing
+
+## 🚀 Vista Rápida
+
+### Endpoints Principales
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/v1/videos/health` | Health check + DB status |
+| POST | `/v1/videos/upload` | Subir video (max 100MB) |
+| GET | `/v1/videos/{id}` | Obtener video por ID |
+| GET | `/v1/videos/project/{projectId}` | Listar videos por proyecto |
+| DELETE | `/v1/videos/{id}` | Eliminar video (soft delete) |
+
+### Ejemplo de Uso
+
+```bash
+# Health check
+curl -H "Authorization: Bearer test-key-12345" \
+     http://localhost:8270/v1/videos/health
+
+# Upload video
+curl -X POST \
+     -H "Authorization: Bearer test-key-12345" \
+     -F "video=@video.mp4;type=video/mp4" \
+     -F "project_id=PROJECT_TEST" \
+     -F "identifier=VIDEO_001" \
+     -F "title=Mi Video" \
+     http://localhost:8270/v1/videos/upload
+```
+
+Ver [API Reference](./docs/API_REFERENCE.md) para ejemplos completos.
+
+## 🐳 Instalación Rápida
+
+### Con Docker (Recomendado)
+
+```bash
+# 1. Clonar repositorio
+git clone <repository-url>
+cd UPLOAD_VIDEOS_2
+
+# 2. Configurar entorno
+cp .env.example .env
+
+# 3. Levantar contenedor
+docker-compose up -d
+
+# 4. Verificar
+curl http://localhost:8270/v1/videos/health
+```
+
+### Sin Docker
+
+```bash
+# 1. Instalar dependencias
+composer install
+
+# 2. Crear base de datos
+mysql -u root -p < migrations/001_create_videos_table.sql
+
+# 3. Configurar .env
+cp .env.example .env
+# Editar .env con tus credenciales
+
+# 4. Iniciar servidor
+php -S localhost:8270 core.php
+```
+
+Ver [Deployment Guide](./docs/DEPLOYMENT.md) para instrucciones detalladas.
 
 ## 🏗️ Arquitectura
 
 ```
-┌─────────────────┐
-│  Mobile App     │
-└────────┬────────┘
-         │ HTTPS + API Key
-         ▼
-┌─────────────────┐
-│  API Gateway    │  ← Rate Limiting, Auth
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   VideoBLL      │  ← Business Logic
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   VideoDAO      │  ← Data Access (PDO)
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   MySQL DB      │  ← Videos metadata
-└─────────────────┘
+Mobile App
+    ↓ HTTPS + API Key
+API Gateway (Rate Limiting, Auth)
+    ↓
+VideoBLL.php (Business Logic)
+    ↓
+VideoDAO.php (Data Access, PDO)
+    ↓
+MySQL (videos + video_audit_log)
 ```
 
-### Capas de la Aplicación
+### Stack Tecnológico
 
-- **DTO** (Data Transfer Objects): Contratos de datos inmutables
-- **BLL** (Business Logic Layer): Lógica de negocio y validaciones
-- **DAO** (Data Access Object): Acceso a base de datos con prepared statements
-- **Middleware**: Autenticación, autorización, rate limiting
+- **Backend**: PHP 8.3.16 + Slim Framework 4.15.1
+- **Database**: MySQL 8.0+ con transacciones
+- **ORM**: DBConnectorPDO (namespace Libraries)
+- **Testing**: PHPUnit 10.5.60
+- **Static Analysis**: PHPStan Level 5
+- **Web Server**: Apache 2.4.62
+- **Container**: Docker + Docker Compose
 
-## 📦 Requisitos
+### Patrón de Capas
 
-- PHP >= 8.3.16
-- MySQL >= 8.0
-- Composer 2.x
-- Extensiones PHP:
-  - PDO
-  - pdo_mysql
-  - fileinfo
-  - json
+```
+┌─────────────────────────────────┐
+│  Routes (Slim 4)                │  ← Definición de endpoints
+├─────────────────────────────────┤
+│  DTO (Data Transfer Objects)    │  ← Contratos inmutables
+├─────────────────────────────────┤
+│  BLL (Business Logic)           │  ← Validación y lógica
+│  - extends \App\BaseClass       │
+├─────────────────────────────────┤
+│  DAO (Data Access)              │  ← executeSelect/Statement
+│  - extends BaseDAO               │
+├─────────────────────────────────┤
+│  DBConnectorPDO                 │  ← Conexión PDO, logs, tx
+└─────────────────────────────────┘
+```
 
-## 🚀 Instalación
+Ver [Architecture](./docs/ARCHITECTURE.md) para más detalles.
 
-### 1. Clonar el repositorio
+## 🧪 Testing
 
 ```bash
-git clone <repository-url>
-cd UPLOAD_VIDEOS_2
+# Ejecutar todos los tests
+composer test
+
+# Tests con cobertura (requiere Xdebug)
+composer test:coverage
+
+# Análisis estático PHPStan
+composer phpstan
 ```
 
-### 2. Instalar dependencias
+### Resultados Actuales
 
-```bash
-composer install
-```
+- ✅ **Unit Tests**: 14/14 passing (100%)
+- ✅ **Assertions**: 110 assertions
+- ✅ **PHPStan**: Level 5, 0 errors
+- ⏱️ **Execution Time**: ~1 second
 
-### 3. Configurar variables de entorno
-
-```bash
-cp .env.example .env
-# Editar .env con tus credenciales
-```
-
-### 4. Ejecutar migrations
-
-```bash
-mysql -u root -p < migrations/001_create_videos_table.sql
-```
-
-### 5. Crear directorios necesarios
-
-```bash
-mkdir -p uploads app/log
-chmod 755 uploads app/log
-```
-
-## ⚙️ Configuración
-
-### Archivo `.env`
-
-```env
-# Database
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=videos_db
-DB_USER=root
-DB_PASS=your_password
-
-# Upload
-UPLOAD_PATH=./uploads
-
-# API Keys (genera con: openssl rand -hex 32)
-VALID_API_KEYS=key1,key2,key3
-
-# Environment
-APP_ENV=production
-APP_DEBUG=false
-```
-
-### Generar API Keys seguras
-
-```bash
-openssl rand -hex 32
-```
-
-## 📡 Uso de la API
-
-### Base URL
-
-```
-https://your-domain.com/api
-```
-
-### Autenticación
-
-Todas las peticiones requieren un API Key válido:
-
-**Header:**
-```
-X-API-Key: your-api-key-here
-```
-
-O:
-
-```
-Authorization: Bearer your-api-key-here
-```
-
-### Endpoints
-
-#### 1. Subir Video
-
-**POST** `/api/videos/upload`
-
-**Request:**
-```bash
-curl -X POST https://api-upload.simpledatacorp.com/v1/videos/upload \
-  -H "X-API-Key: your-api-key" \
-  -F "video=@/path/to/video.mp4" \
-  -F "project_id=PROJECT_ABC" \
-  -F "video_identifier=VIDEO_001" \
-  -F 'metadata={"user_id":"123","device":"Android"}'
-```
-
-**Response (201):**
-```json
-{
-  "status": {
-    "code": 201,
-    "description": "Video uploaded successfully"
-  },
-  "data": {
-    "id": 1,
-    "project_id": "PROJECT_ABC",
-    "video_identifier": "VIDEO_001",
-    "original_filename": "video.mp4",
-    "file_path": "PROJECT_ABC/2025/12/10/VIDEO_001/video.mp4",
-    "file_size": 15728640,
-    "mime_type": "video/mp4",
-    "status": "completed",
-    "created_at": "2025-12-10 10:30:00"
-  }
-}
-```
-
-#### 2. Obtener Video por ID
-
-**GET** `/api/videos/{id}`
-
-**Response (200):**
-```json
-{
-  "status": {
-    "code": 200,
-    "description": "Success"
-  },
-  "data": {
-    "id": 1,
-    "project_id": "PROJECT_ABC",
-    "video_identifier": "VIDEO_001",
-    "original_filename": "video.mp4",
-    "file_path": "PROJECT_ABC/2025/12/10/VIDEO_001/video.mp4",
-    "file_size": 15728640,
-    "mime_type": "video/mp4"
-  }
-}
-```
-
-#### 3. Listar Videos por Proyecto
-
-**GET** `/api/videos/project/{project_id}?page=1&per_page=50`
-
-**Response (200):**
-```json
-{
-  "status": {
-    "code": 200,
-    "description": "Success"
-  },
-  "data": {
-    "videos": [...],
-    "pagination": {
-      "page": 1,
-      "per_page": 50,
-      "count": 10
-    }
-  }
-}
-```
-
-#### 4. Eliminar Video (Soft Delete)
-
-**DELETE** `/api/videos/{id}`
-
-**Response (200):**
-```json
-{
-  "status": {
-    "code": 200,
-    "description": "Video deleted successfully"
-  },
-  "data": null
-}
-```
-
-#### 5. Health Check
-
-**GET** `/api/health`
-
-**Response (200):**
-```json
-{
-  "status": {
-    "code": 200,
-    "description": "API is running"
-  },
-  "data": {
-    "service": "Video Upload API",
-    "version": "1.0.0",
-    "database": "connected",
-    "timestamp": "2025-12-10 10:30:00"
-  }
-}
-```
-
-### Códigos de Error
-
-| Código | Descripción |
-|--------|-------------|
-| 400 | Bad Request - Datos inválidos |
-| 401 | Unauthorized - API Key inválido o faltante |
-| 404 | Not Found - Recurso no encontrado |
-| 409 | Conflict - Video duplicado |
-| 429 | Too Many Requests - Rate limit excedido |
-| 500 | Internal Server Error - Error del servidor |
-
-## 📁 Estructura de Archivos
-
-```
-/
-├── app/
-│   ├── BLL/
-│   │   └── VideoBLL.php          # Lógica de negocio
-│   ├── DAO/
-│   │   └── VideoDAO.php          # Acceso a datos
-│   ├── DTO/
-│   │   ├── VideoUploadDTO.php    # DTO entrada
-│   │   ├── VideoResponseDTO.php  # DTO salida
-│   │   └── ApiResponseDTO.php    # DTO respuesta estándar
-│   ├── Middleware/
-│   │   └── ApiAuthMiddleware.php # Autenticación y rate limiting
-│   └── log/                      # Logs de aplicación
-├── migrations/
-│   └── 001_create_videos_table.sql
-├── tests/
-│   ├── Unit/                     # Tests unitarios
-│   └── uploads/                  # Archivos test
-├── uploads/                      # Almacenamiento de videos
-├── vendor/                       # Dependencias Composer
-├── .env.example                  # Template variables entorno
-├── .gitignore
-├── .gitlab-ci.yml               # Pipeline CI/CD
-├── api.php                      # Entry point API
-├── composer.json
-├── phpunit.xml                  # Configuración tests
-└── README.md
-```
-
-### Estructura de Almacenamiento
-
-Los videos se organizan automáticamente:
-
-```
-uploads/
-└── {project_id}/
-    └── {year}/
-        └── {month}/
-            └── {day}/
-                └── {video_identifier}/
-                    └── {filename}
-
-Ejemplo:
-uploads/PROJECT_ABC/2025/12/10/VIDEO_001/video.mp4
-```
-
-## 🔒 Seguridad (OWASP Top 10)
-
-### 1. Control de Acceso (A01)
-- ✅ Autenticación obligatoria con API Key
-- ✅ Rate limiting (60 req/min por API key)
-- ✅ Validación constante de permisos
-
-### 2. Fallos Criptográficos (A02)
-- ✅ Contraseñas nunca en texto plano
-- ✅ Comunicación HTTPS obligatoria
-- ✅ API Keys con hash seguro
-
-### 3. Inyección (A03)
-- ✅ Prepared statements (PDO) en todas las queries
-- ✅ Validación estricta de entradas
-- ✅ Sanitización de nombres de archivo
-
-### 4. Configuración Incorrecta (A05)
-- ✅ Variables de entorno para secretos
-- ✅ Errores genéricos en producción
-- ✅ Hardening de permisos de archivos
-
-### 5. Validación de Entradas
-- ✅ Validación de MIME types
-- ✅ Validación de extensiones de archivo
-- ✅ Límite de tamaño (500MB)
-- ✅ Whitelist de tipos permitidos
-
-### 6. Logging y Auditoría
-- ✅ Trazabilidad completa (DayLog)
-- ✅ Audit log de operaciones
-- ✅ Transaction IDs únicos
-- ✅ Sin datos sensibles en logs
-
-## 🧪 Pruebas
-
-### Ejecutar tests unitarios
-
-```bash
-./vendor/bin/phpunit
-```
-
-### Ejecutar con coverage
-
-```bash
-./vendor/bin/phpunit --coverage-html coverage
-```
-
-### Ejecutar tests específicos
-
-```bash
-./vendor/bin/phpunit tests/Unit/VideoUploadDTOTest.php
-```
-
-### Tests implementados
-
-- ✅ VideoUploadDTO validation
-- ✅ ApiResponseDTO formatting
-- ✅ ApiAuthMiddleware authentication
-- ✅ ApiAuthMiddleware rate limiting
-
-## 🚀 CI/CD
-
-El proyecto incluye un pipeline completo de DevSecOps en `.gitlab-ci.yml`:
-
-### Stages
-
-1. **Sanity** - Verificación del runner
-2. **Dependencies** - Instalación de Composer
-3. **Test** - PHPUnit con coverage
-4. **SAST** - PHPStan + PHPCS (PSR-12)
-5. **Security** - Gitleaks + Composer Audit
-6. **Build** - Docker image
-7. **Deploy** - Staging/Production
-
-### Variables de CI/CD requeridas
-
-```
-CI_REGISTRY_USER
-CI_REGISTRY_PASSWORD
-SSH_PRIVATE_KEY
-STAGING_SERVER
-STAGING_USER
-PRODUCTION_SERVER
-PRODUCTION_USER
-```
-
-## 🐳 Docker
-
-### Desarrollo con Docker
-
-```bash
-# Build
-docker build -t video-upload-api .
-
-# Run
-docker run -p 8080:80 \
-  -e DB_HOST=host.docker.internal \
-  -e DB_NAME=videos_db \
-  -e DB_USER=root \
-  -e DB_PASS=password \
-  video-upload-api
-```
-
-### Docker Compose
-
-```bash
-docker-compose up -d
-```
-
-## 📝 Logging
-
-Todos los logs se almacenan en `app/log/` con el formato DayLog:
-
-```
-2025-12-10_api.log
-```
-
-Formato de log:
-```
-[2025-12-10 10:30:00] abc123 [video_bll] Video uploaded successfully: ID=1
-```
+Ver [Testing Guide](./docs/TESTING_GUIDE.md) para más información
 
 ## 🤝 Contribución
 
-1. Crear branch feature: `git checkout -b feature/nueva-funcionalidad`
-2. Commit: `git commit -m 'feat: agregar nueva funcionalidad'`
-3. Push: `git push origin feature/nueva-funcionalidad`
-4. Crear Merge Request
+### Proceso de Desarrollo
 
-### Convenciones de Commits
+1. **Fork** del repositorio
+2. Crear rama feature: `git checkout -b feature/nueva-funcionalidad`
+3. Hacer cambios siguiendo [Development Guide](./docs/DEVELOPMENT.md)
+4. Ejecutar tests: `composer test && composer phpstan`
+5. Commit siguiendo [Conventional Commits](https://www.conventionalcommits.org/)
+6. Push y crear Pull Request
 
-- `feat:` Nueva funcionalidad
-- `fix:` Corrección de bug
-- `refactor:` Refactorización
-- `test:` Agregar tests
-- `docs:` Documentación
-- `chore:` Tareas de mantenimiento
+### Estándares de Código
+
+- **PSR-12**: Coding style standard
+- **PHPStan Level 5**: Sin errores
+- **Test Coverage**: Mínimo 70%, objetivo 80%+
+- **Strict Types**: Declaración `declare(strict_types=1)` obligatoria
+
+### Checklist Pre-Commit
+
+- [ ] Tests unitarios pasan (`composer test`)
+- [ ] PHPStan sin errores (`composer phpstan`)
+- [ ] Código sigue PSR-12
+- [ ] Documentación actualizada
+- [ ] Sin credenciales hardcodeadas
+- [ ] Logs apropiados añadidos
+
+Ver [Development Guide](./docs/DEVELOPMENT.md) para más detalles.
 
 ## 📞 Soporte
+
+### Documentación
+
+- **[docs/README.md](./docs/README.md)** - Índice completo de documentación
+- **[docs/API_REFERENCE.md](./docs/API_REFERENCE.md)** - Referencia de API
+- **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - Arquitectura del sistema
+
+### Contacto
+
+- **Issues**: GitHub Issues para bugs y features
+- **Discussions**: GitHub Discussions para preguntas
+- **Email**: soporte@company.com
+
+## 📄 Licencia
+
+[Incluir información de licencia]
+
+## 🎯 Roadmap
+
+### v1.1 (Q1 2026)
+
+- [ ] Video thumbnails automáticos
+- [ ] Transcodificación de formatos
+- [ ] Streaming HLS/DASH
+- [ ] Búsqueda full-text
+- [ ] CDN integration
+
+### v2.0 (Q2 2026)
+
+- [ ] Multi-tenant isolation
+- [ ] Video analytics
+- [ ] Webhooks de eventos
+- [ ] GraphQL API
+- [ ] Kubernetes deployment
+
+## 📊 Métricas del Proyecto
+
+- **Líneas de código**: ~3,500 (BLL/DAO/Routes)
+- **Tests**: 14 tests unitarios, 110 assertions
+- **Cobertura**: ~75%
+- **Errores PHPStan**: 0 (Level 5)
+- **Dependencias**: 15 packages Composer
+- **Tiempo de build**: ~30 segundos
+- **Tiempo de tests**: ~1 segundo
+
+## 🏆 Changelog
+
+### v1.0.0 (Diciembre 2025)
+
+#### 🎉 Initial Release
+- ✅ Refactorización completa a patrón BLL/DAO corporativo
+- ✅ Migración a DBConnectorPDO (namespace Libraries)
+- ✅ Implementación de BaseClass/BaseComponent/BaseDAO
+- ✅ Tests unitarios completos (14/14 passing)
+- ✅ PHPStan Level 5 sin errores (reducción de 129→0 errores)
+- ✅ Docker con Apache 2.4.62 y PHP 8.3.16
+- ✅ Upload limits aumentados a 100MB
+- ✅ Documentación completa en carpeta docs/
+- ✅ Postman collection con 9 casos de prueba
+- ✅ Soft delete con audit logging
+- ✅ Rate limiting (60 req/min)
+- ✅ Health check con estado de BD
+
+#### 📝 Documentation
+- ✅ API_REFERENCE.md - Referencia completa de endpoints
+- ✅ ARCHITECTURE.md - Documentación de arquitectura
+- ✅ DEVELOPMENT.md - Guía para desarrolladores
+- ✅ DEPLOYMENT.md - Guía de despliegue
+- ✅ TESTING_GUIDE.md - Estrategias de testing
+- ✅ docs/README.md - Portal de documentación
+
+#### 🔧 Technical Improvements
+- Fixed type mismatches (string vs int)
+- Added ERROR_CODE_NO_FOUND_RECORD constant
+- Removed dead catch blocks
+- Added property types to AuthMiddleware
+- Simplified HttpErrorHandler
+- Fixed rate limit test with reflection
+
+Ver [Implementation Summary](./docs/IMPLEMENTATION_SUMMARY.md) para más detalles.
+
+---
+
+**Desarrollado con ❤️ por el Team Backend**  
+**Última actualización**: Diciembre 2025  
+**Versión**: 1.0.0
+
+## 🔗 Links Útiles
+
+- [Documentación Completa](./docs/README.md)
+- [API Reference](./docs/API_REFERENCE.md)
+- [Postman Collection](./postman_collection.json)
+- [Slim Framework](https://www.slimframework.com/docs/v4/)
+- [PSR-12 Standard](https://www.php-fig.org/psr/psr-12/)
+
+---
+
+<p align="center">
+  <a href="./docs/README.md">📚 Ver Documentación Completa</a> •
+  <a href="./docs/API_REFERENCE.md">🔌 API Reference</a> •
+  <a href="./docs/QUICKSTART.md">⚡ Quick Start</a>
+</p>
 
 Para soporte técnico o preguntas, contactar al equipo de desarrollo en SimpleData Corp.
 

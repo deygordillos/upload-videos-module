@@ -52,7 +52,7 @@ class HttpErrorHandler extends ErrorHandler
 
         if (
             !($exception instanceof HttpException)
-            && ($exception instanceof Exception || $exception instanceof Throwable)
+            && $exception instanceof Throwable
             && $this->displayErrorDetails
         ) {
             $description = $exception->getMessage();
