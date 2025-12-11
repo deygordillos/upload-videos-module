@@ -38,12 +38,12 @@ namespace App\Utils;
  * @package   Utils/php
  * @example <br />
  * <pre>$DayLog = new DayLog('/tmp/', MODULE_NAME)
- * $DayLog->WriteLog("Este es un mensaje de prueba... \n");
+ * $DayLog->writeLog("Este es un mensaje de prueba... \n");
  * 
  * Escritura en /tmp/log/MODULE_NAME-YYYYMMDD.log</pre>
- * @version   0.01
- * @since     2016-04-25
- * @author hherrera
+ * @version   1.0
+ * @since     15-09-2025
+ * @author Dey Gordillo  <dey.gordillo@simpledatacorp.com>
  */
 class DayLog {
     
@@ -65,6 +65,7 @@ class DayLog {
     private $szErrorDescription;
     private $szHomepath;
     private $szPathLog;
+    private $szFullPathLog;
     private $szVptModuleName;
     private $szFileLog;
 
@@ -83,8 +84,13 @@ class DayLog {
         } else {
             $this->szHomepath = $szHomepath;
             $this->szPathLog = $szPathLog;
-            $this->szVptModuleName = $szVptModuleName;
+            $this->szVptModuleName = gethostname() . '_' . $szVptModuleName;
+            $this->szFullPathLog = $this->szHomepath . '/' . $this->szPathLog . '/' . $this->szVptModuleName . '-' . date('Ymd') . self::EXTENSION_FILE_LOG;
+            ini_set('error_log', $this->szFullPathLog );
 
+            if (!is_dir($this->szHomepath . '/' . $this->szPathLog)) {
+                mkdir($this->szHomepath . '/' . $this->szPathLog, 0777, true);
+            }
             $this->setError(self::ERROR_CODE_OK);
             $this->setErrorDescription(self::ERROR_DESC_OK);
         }
@@ -107,7 +113,7 @@ class DayLog {
         }
 
         if ($this->getError() == 0) {
-            $this->szFileLog = fopen($this->szHomepath . '/' . $this->szPathLog . '/' . $this->szVptModuleName . '-' . date('Ymd') . self::EXTENSION_FILE_LOG, 'a+');
+            $this->szFileLog = fopen($this->szFullPathLog, 'a+');
             if ($this->szFileLog != FALSE) {
                 fwrite($this->szFileLog, date("H:i:s") . '.' . $this->milisec() . ' ' . $szTypeMessage . self::SEPARATOR_LOG . $szMessage);
                 fclose($this->szFileLog);
@@ -142,4 +148,7 @@ class DayLog {
         $this->szErrorDescription = $szErrorDescription;
     }
 
+    public function getFullPathLog() {
+        return $this->szFullPathLog;
+    }
 }
