@@ -134,3 +134,6 @@ log
 *log-*
 *.svg
 images
+
+# Except test fixtures (needed for CI/CD)
+!tests/fixtures/**

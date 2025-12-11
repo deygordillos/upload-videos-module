@@ -66,6 +66,42 @@ php_tests:
   coverage: '/^\s*Lines:\s*\d+.\d+\%/'
 
 # -------------------------
+# 🧪 3b. Integration Tests
+# -------------------------
+integration_tests:
+  stage: test
+  image: composer:latest
+  tags: ["docker"]
+  rules:
+    - when: always
+  needs: ["install_deps"]
+  services:
+    - mysql:8.0
+  variables:
+    MYSQL_ROOT_PASSWORD: root
+    MYSQL_DATABASE: sdc_videos
+    BDD_HOST: mysql
+    BDD_USER: root
+    BDD_PASS: root
+    BDD_PORT: "3306"
+    BDD_SCHEMA: sdc_videos
+  before_script:
+    # Wait for MySQL to be ready
+    - apt-get update && apt-get install -y mysql-client
+    - |
+      until mysql -h mysql -u root -proot -e "SELECT 1" &> /dev/null; do
+        echo "Waiting for MySQL..."
+        sleep 2
+      done
+    - echo "MySQL is ready"
+    # Create database schema
+    - mysql -h mysql -u root -proot sdc_videos < migrations/001_create_videos_table.sql
+  script:
+    - php -v
+    - ./vendor/bin/phpunit --testsuite "Integration Tests" --testdox
+  allow_failure: true
+
+# -------------------------
 # 🔍 4. SAST - PHPStan
 # -------------------------
 phpstan:

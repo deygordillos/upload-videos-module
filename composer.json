@@ -17,6 +17,8 @@
   },
   "scripts": {
     "test": "phpunit",
+    "test:unit": "phpunit --testsuite \"Unit Tests\"",
+    "test:integration": "phpunit --testsuite \"Integration Tests\"",
     "test:coverage": "phpunit --coverage-html coverage",
     "lint": "phpcs --standard=PSR12 app/",
     "lint:fix": "phpcbf --standard=PSR12 app/",
