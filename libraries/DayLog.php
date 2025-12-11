@@ -1,5 +1,6 @@
 <?php
-namespace App\Utils;
+
+namespace Libraries;
 
 /* * ***************************************************************** 
 
@@ -38,12 +39,12 @@ namespace App\Utils;
  * @package   Utils/php
  * @example <br />
  * <pre>$DayLog = new DayLog('/tmp/', MODULE_NAME)
- * $DayLog->writeLog("Este es un mensaje de prueba... \n");
+ * $DayLog->WriteLog("Este es un mensaje de prueba... \n");
  * 
  * Escritura en /tmp/log/MODULE_NAME-YYYYMMDD.log</pre>
- * @version   1.0
- * @since     15-09-2025
- * @author Dey Gordillo  <dey.gordillo@simpledatacorp.com>
+ * @version   0.01
+ * @since     2016-04-25
+ * @author hherrera
  */
 class DayLog {
     
@@ -88,9 +89,6 @@ class DayLog {
             $this->szFullPathLog = $this->szHomepath . '/' . $this->szPathLog . '/' . $this->szVptModuleName . '-' . date('Ymd') . self::EXTENSION_FILE_LOG;
             ini_set('error_log', $this->szFullPathLog );
 
-            if (!is_dir($this->szHomepath . '/' . $this->szPathLog)) {
-                mkdir($this->szHomepath . '/' . $this->szPathLog, 0777, true);
-            }
             $this->setError(self::ERROR_CODE_OK);
             $this->setErrorDescription(self::ERROR_DESC_OK);
         }

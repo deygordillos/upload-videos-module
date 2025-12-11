@@ -1,18 +1,74 @@
+# Dockerfile para Video Upload API
+# PHP 8.3.16 con Apache
+
 FROM php:8.3.16-apache
 
-RUN apt update \
-    && apt install -y zlib1g-dev g++ git libicu-dev zip libzip-dev zip libpq-dev \
-    && docker-php-ext-install mysqli intl opcache pdo pdo_mysql \
+# Metadata
+LABEL maintainer="SimpleData Corp"
+LABEL version="1.0.0"
+LABEL description="Secure Video Upload API"
+
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y \
+    zlib1g-dev \
+    g++ \
+    git \
+    libicu-dev \
+    libzip-dev \
+    libpq-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instalar extensiones PHP
+RUN docker-php-ext-install \
+    mysqli \
+    intl \
+    opcache \
+    pdo \
+    pdo_mysql \
+    zip \
+    gd \
     && pecl install apcu \
-    && docker-php-ext-enable apcu \
-    && docker-php-ext-configure zip \
-    && docker-php-ext-configure intl \
-    && docker-php-ext-install zip
+    && docker-php-ext-enable apcu
 
-RUN apt install -y libpng-dev && docker-php-ext-install gd
+# Instalar Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+# Configurar Apache
+RUN a2enmod rewrite headers
 COPY ./docker/apache.conf /etc/apache2/sites-available/000-default.conf
 
-RUN a2enmod rewrite
+# Crear usuario no-root
+RUN useradd -m -u 1000 -s /bin/bash appuser
 
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# Configurar directorio de trabajo
+WORKDIR /api
+
+# Copiar archivos del proyecto
+COPY --chown=appuser:appuser . /api/
+
+# Instalar dependencias de PHP
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+# Crear directorios necesarios y establecer permisos
+RUN mkdir -p uploads log \
+    && chown -R appuser:www-data uploads log \
+    && chmod -R 775 uploads log
+
+# Configurar permisos
+RUN chown -R appuser:www-data /api \
+    && chmod -R 755 /api \
+    && chmod 644 core.php
+
+# Exponer puerto
+EXPOSE 80
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost/v1/videos/health || exit 1
+
+# Comando de inicio
+CMD ["apache2-foreground"]

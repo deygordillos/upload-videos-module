@@ -11,6 +11,8 @@ use App\Estructure\BLL\CapacityBLL;
 use App\Handlers\HttpErrorHandler;
 use App\Handlers\ShutdownHandler;
 use App\Utils\DayLog;
+use App\Routes\VideoRoutes;
+use App\Middleware\VideoAuthMiddleware;
 
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -91,43 +93,11 @@ $app->get('/test', function (Request $request, Response $response, $args) {
     return $response;
 });
 
-$app->group('/core', function (RouteCollectorProxy $group) {
-    
-    $group->get('/', function ($request, $response, array $args) {
+// Video Upload API Routes (con autenticación)
+$app->group('/v1/videos', function (RouteCollectorProxy $group) {
+    VideoRoutes::register($group);
+})->add(new VideoAuthMiddleware());
 
-        $body = (object)$request->getQueryParams();
-        $body->cantidad = (int)$body->cantidad ?? 0;
-        $body->id_pool = (int)$body->id_pool ?? 0;
-        $body->periodo = (int)$body->periodo ?? 0;
-        $body->id_order = (int)$body->id_order ?? 0;
-        // Crear instancia del BLL y pasar los componentes
-        $class = new CapacityBLL();
-        
-        $returnObject = $class->getCapacity($body);
-        
-        $response
-            ->getBody()
-            ->write( json_encode($returnObject) );
-        $newResponse = $response->withStatus( $returnObject->Return->Code ?? 200 );
-        return $newResponse;
-    });
-    
-    $group->post('/schedule', function ($request, $response, array $args) {
-        $body = (object)$request->getParsedBody();
-        $body->periodo = (int)$body->periodo ?? 0;
-        $body->cantidad = (int)$body->cantidad ?? 0;
-        $body->id_pool = (int)$body->id_pool ?? 0;
-        // Crear instancia del BLL y pasar los componentes
-        $class = new CapacityBLL();
-        $returnObject = $class->schedule($body);
-        
-        $response
-            ->getBody()
-            ->write( json_encode($returnObject) );
-        $newResponse = $response->withStatus( $returnObject->Return->Code ?? 200 );
-        return $newResponse;
-    });
-});
 
 try {
     $app->run();
