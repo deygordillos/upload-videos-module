@@ -9,8 +9,8 @@ use Slim\Psr7\Response;
 
 final class AuthMiddleware 
 {
-    private $isLogged = false;
-    private $dataUser;
+    private bool $isLogged = false;
+    private mixed $dataUser = null;
 
     public function __invoke(Request $request, RequestHandler $handler): Response
     {
@@ -101,11 +101,11 @@ final class AuthMiddleware
         return $response;
     }
 
-    final function isLogged() {
+    final function isLogged(): bool {
         return $this->isLogged;
     }
 
-    public function getDataUser() {
+    public function getDataUser(): mixed {
         return $this->dataUser;
     }
 }

@@ -1,16 +1,15 @@
 <?php
 /**
- * Api - Capacity
+ * SDC - Upload Videos API
  * Slim 4 - Composer
- * CreatedAt: 15-09-2025 
- * @version 1.0 
+ * @version 1.0 11-12-2025 
  * @author Dey Gordillo <dey.gordillo@simpledatacorp.com>
  */
 
-use App\Estructure\BLL\CapacityBLL;
+use App\Routes\VideoRoutes;
 use App\Handlers\HttpErrorHandler;
 use App\Handlers\ShutdownHandler;
-use App\Utils\DayLog;
+use App\Middleware\VideoAuthMiddleware;
 
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -30,11 +29,23 @@ try {
 require_once dirname(__FILE__) . '/config.php';
 
 // Set that to your needs
-$displayErrorDetails = true;
+$displayErrorDetails = APP_DEBUG === 'true' ? true : false;
 
 $app = AppFactory::create();
-$app->setBasePath($_ENV['APP_PATH'] ?? '/');
-//$app->setBasePath('/whatsapp/rest/v1');
+
+// Detectar basePath automáticamente o usar el configurado en .env
+if (isset($_ENV['APP_PATH']) && $_ENV['APP_PATH'] !== '' && $_ENV['APP_PATH'] !== '/') {
+    $app->setBasePath($_ENV['APP_PATH']);
+} else {
+    // Detectar automáticamente desde SCRIPT_NAME
+    // Si SCRIPT_NAME es /liv/komatsu/cl/v0.00.dev/core.php
+    // entonces basePath debe ser /liv/komatsu/cl/v0.00.dev
+    $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+    $basePath = dirname($scriptName);
+    if ($basePath !== '/' && $basePath !== '\\' && $basePath !== '.') {
+        $app->setBasePath($basePath);
+    }
+}
 
 $callableResolver = $app->getCallableResolver();
 $responseFactory = $app->getResponseFactory();
@@ -91,43 +102,11 @@ $app->get('/test', function (Request $request, Response $response, $args) {
     return $response;
 });
 
-$app->group('/core', function (RouteCollectorProxy $group) {
-    
-    $group->get('/', function ($request, $response, array $args) {
+// Video Upload API Routes (con autenticación)
+$app->group('/v1/videos', function (RouteCollectorProxy $group) {
+    VideoRoutes::register($group);
+})->add(new VideoAuthMiddleware());
 
-        $body = (object)$request->getQueryParams();
-        $body->cantidad = (int)$body->cantidad ?? 0;
-        $body->id_pool = (int)$body->id_pool ?? 0;
-        $body->periodo = (int)$body->periodo ?? 0;
-        $body->id_order = (int)$body->id_order ?? 0;
-        // Crear instancia del BLL y pasar los componentes
-        $class = new CapacityBLL();
-        
-        $returnObject = $class->getCapacity($body);
-        
-        $response
-            ->getBody()
-            ->write( json_encode($returnObject) );
-        $newResponse = $response->withStatus( $returnObject->Return->Code ?? 200 );
-        return $newResponse;
-    });
-    
-    $group->post('/schedule', function ($request, $response, array $args) {
-        $body = (object)$request->getParsedBody();
-        $body->periodo = (int)$body->periodo ?? 0;
-        $body->cantidad = (int)$body->cantidad ?? 0;
-        $body->id_pool = (int)$body->id_pool ?? 0;
-        // Crear instancia del BLL y pasar los componentes
-        $class = new CapacityBLL();
-        $returnObject = $class->schedule($body);
-        
-        $response
-            ->getBody()
-            ->write( json_encode($returnObject) );
-        $newResponse = $response->withStatus( $returnObject->Return->Code ?? 200 );
-        return $newResponse;
-    });
-});
 
 try {
     $app->run();
@@ -135,6 +114,6 @@ try {
     http_response_code(400);
     echo json_encode([
         "code" => 400, 
-        "message" => sprintf('Bad Request: %s', $exception->getMessage())
+        "description" => sprintf('Bad Request: %s', $exception->getMessage())
     ]);
 }

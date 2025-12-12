@@ -2,11 +2,11 @@ version: "3.8"
 
 services:
 
-  dfeed_td_capacity:
-    container_name: dfeed_td_capacity
+  sdc_upload_videos_api:
+    container_name: sdc_upload_videos_api
     build: .
     ports:
-      - "8260:80"
+      - "8270:80"
     volumes:
       - .:/api
     working_dir: /api

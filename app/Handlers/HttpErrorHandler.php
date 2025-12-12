@@ -52,18 +52,18 @@ class HttpErrorHandler extends ErrorHandler
 
         if (
             !($exception instanceof HttpException)
-            && ($exception instanceof Exception || $exception instanceof Throwable)
+            && $exception instanceof Throwable
             && $this->displayErrorDetails
         ) {
             $description = $exception->getMessage();
         }
 
         $error = [
-            'statusCode' => $statusCode,
-            'error' => [
-                'type' => $type,
-                'description' => $description,
-            ],
+            "status" => [
+                "code" => $statusCode,
+                "type" => $type,
+                "description" => $description,
+            ]
         ];
         
         $payload = json_encode($error, JSON_PRETTY_PRINT);

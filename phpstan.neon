@@ -1,0 +1,20 @@
+parameters:
+    level: 5
+    paths:
+        - app
+    excludePaths:
+        - vendor
+    bootstrapFiles:
+        - phpstan-bootstrap.php
+    reportUnmatchedIgnoredErrors: false
+    # Constantes dinámicas que se cargan desde config.php
+    dynamicConstantNames:
+        - ERROR_CODE_NO_FOUND_RECORD
+        - ERROR_DESC_NO_FOUND_RECORD
+    ignoreErrors:
+        # Clases de otros módulos que no están en este proyecto
+        - '#Instantiated class App\\DAO\\LoginUserDAO not found#'
+        - '#Instantiated class App\\Estructure\\BLL\\AuthBLL not found#'
+        - '#Call to method .* on an unknown class App\\(DAO\\LoginUserDAO|Estructure\\BLL\\AuthBLL)#'
+        # AuthMiddleware es código legacy, Response vs ResponseInterface es compatible
+        - '#Method App\\Middleware\\AuthMiddleware::__invoke\(\) should return Slim\\Psr7\\Response but returns Psr\\Http\\Message\\ResponseInterface#'

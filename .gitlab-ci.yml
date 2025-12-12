@@ -1,0 +1,258 @@
+# .gitlab-ci.yml - Video Upload API DevSecOps Pipeline
+# v1.0 2025-12-10
+# Based on: .gitlab-ci.yml - Plantilla DevSecOps PHP
+# @author SimpleData Corp
+
+stages:
+  - sanity
+  - deps
+  - test
+  - sast
+  - security
+  #- build
+  - deploy
+
+variables:
+  COMPOSER_ALLOW_SUPERUSER: "1"
+  COMPOSER_NO_INTERACTION: "1"
+  GIT_DEPTH: 0
+
+# -------------------------
+# 🟢 1. Sanity del Runner
+# -------------------------
+sanity:
+  stage: sanity
+  image: alpine:3.20
+  tags: ["docker"]
+  rules:
+    - when: always
+  script:
+    - echo "Runner conectado ✔"
+    - uname -a
+    - cat /etc/os-release | head -n 1
+
+# -------------------------
+# 📦 2. Dependencias PHP
+# -------------------------
+install_deps:
+  stage: deps
+  image: composer:latest
+  tags: ["docker"]
+  rules:
+    - when: always
+  script:
+    - composer install --prefer-dist --optimize-autoloader --ignore-platform-reqs
+  artifacts:
+    paths:
+      - vendor/
+    expire_in: 1h
+  cache:
+    key: "composer-cache-${CI_COMMIT_REF_SLUG}"
+    paths:
+      - vendor/
+
+# -------------------------
+# 🧪 3. Tests Unitarios (PHPUnit)
+# -------------------------
+unit_tests:
+  stage: test
+  image: composer:latest
+  tags: ["docker"]
+  rules:
+    - when: always
+  needs: ["install_deps"]
+  script:
+    - php -v
+    - composer test:unit
+  coverage: '/^\s*Lines:\s*\d+.\d+\%/'
+
+# -------------------------
+# 🧪 3b. Tests de Integración
+# -------------------------
+integration_tests:
+  stage: test
+  image: php:8.3-cli
+  tags: ["docker"]
+  rules:
+    - when: always
+  needs: ["install_deps"]
+  services:
+    - name: mysql:8.0
+      alias: mysql
+      command: ["--default-authentication-plugin=mysql_native_password", "--skip-ssl"]
+  variables:
+    MYSQL_ROOT_PASSWORD: root
+    MYSQL_DATABASE: sdc_videos
+    MYSQL_HOST: mysql
+    BDD_HOST: mysql
+    BDD_USER: root
+    BDD_PASS: root
+    BDD_PORT: "3306"
+    BDD_SCHEMA: sdc_videos
+  before_script:
+    # Install PHP extensions, MySQL client and Composer
+    - apt-get update && apt-get install -y default-mysql-client curl unzip
+    - docker-php-ext-install pdo pdo_mysql
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    # Wait for MySQL with timeout
+    - |
+      echo "Waiting for MySQL to be ready..."
+      for i in {1..30}; do
+        if mysql -h mysql -u root -proot --skip-ssl -e "SELECT 1" 2>/dev/null; then
+          echo "MySQL is ready!"
+          break
+        fi
+        echo "Attempt $i/30: MySQL not ready yet..."
+        sleep 2
+      done
+    # Create database schema
+    - mysql -h mysql -u root -proot --skip-ssl sdc_videos < migrations/001_create_videos_table.sql
+  script:
+    - php -v
+    - composer test:integration
+  allow_failure: true
+
+# -------------------------
+# 🔍 4. SAST - PHPStan
+# -------------------------
+phpstan:
+  stage: sast
+  image: composer:latest
+  tags: ["docker"]
+  rules:
+    - when: always
+  needs: ["install_deps"]
+  script:
+    - composer analyse
+  artifacts:
+    when: always
+    paths:
+      - phpstan-report.txt
+    expire_in: 1 week
+  allow_failure: false
+
+# -------------------------
+# 🎯 5. Code style - PHPCS
+# -------------------------
+phpcs:
+  stage: sast
+  image: composer:latest
+  tags: ["docker"]
+  rules:
+    - when: always
+  needs: ["install_deps"]
+  script:
+    - composer lint || true
+  artifacts:
+    when: always
+    paths:
+      - phpcs-report.txt
+    expire_in: 1 week
+  allow_failure: true
+
+# -------------------------
+# 🧪 6. Secret Scanning - Gitleaks
+# -------------------------
+gitleaks_scan:
+  stage: security
+  image:
+    name: zricethezav/gitleaks:latest
+    entrypoint: [""]
+  tags: ["docker"]
+  rules:
+    - when: always
+  script:
+    - gitleaks detect --source . --no-color --report-format json --report-path gitleaks-report.json --exit-code 0
+  artifacts:
+    paths:
+      - gitleaks-report.json
+    expire_in: 1 week
+  allow_failure: true
+
+# -------------------------
+# 🔐 7. Dependency scanning
+# -------------------------
+composer_audit:
+  stage: security
+  image: composer:latest
+  tags: ["docker"]
+  rules:
+    - when: always
+  needs: ["install_deps"]
+  script:
+    - composer audit --format=json | tee composer-audit.json || true
+  artifacts:
+    paths:
+      - composer-audit.json
+    expire_in: 1 week
+  allow_failure: true
+
+# -------------------------
+# 🐳 8. Build Docker Image
+# -------------------------
+# build_image:
+#   stage: build
+#   image: docker:24-cli
+#   services:
+#     - docker:24-dind
+#   tags: ["docker"]
+#   rules:
+#     - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev"'
+#   needs: ["php_tests", "phpcs"]
+#   before_script:
+#     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+#   script:
+#     - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA -t $CI_REGISTRY_IMAGE:latest .
+#     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+#     - docker push $CI_REGISTRY_IMAGE:latest
+#   only:
+#     - main
+#     - dev
+
+# -------------------------
+# 🚀 9. Deploy to Staging
+# -------------------------
+# deploy_staging:
+#   stage: deploy
+#   image: alpine:3.20
+#   tags: ["docker"]
+#   rules:
+#     - if: '$CI_COMMIT_BRANCH == "dev"'
+#       when: manual
+#   needs: ["build_image"]
+#   before_script:
+#     - apk add --no-cache openssh-client
+#     - eval $(ssh-agent -s)
+#     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+#     - mkdir -p ~/.ssh
+#     - chmod 700 ~/.ssh
+#     - ssh-keyscan $STAGING_SERVER >> ~/.ssh/known_hosts
+#   script:
+#     - ssh $STAGING_USER@$STAGING_SERVER "cd /var/www/video-api && docker-compose pull && docker-compose up -d --force-recreate"
+#   environment:
+#     name: staging
+#     url: https://staging-video-api.example.com
+
+# -------------------------
+# 🚀 10. Deploy to Production
+# -------------------------
+# deploy_production:
+#   stage: deploy
+#   image: alpine:3.20
+#   tags: ["docker"]
+#   rules:
+#     - if: '$CI_COMMIT_BRANCH == "main"'
+#       when: manual
+#   needs: ["build_image"]
+#   before_script:
+#     - apk add --no-cache openssh-client
+#     - eval $(ssh-agent -s)
+#     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+#     - mkdir -p ~/.ssh
+#     - chmod 700 ~/.ssh
+#     - ssh-keyscan $PRODUCTION_SERVER >> ~/.ssh/known_hosts
+#   script:
+#     - ssh $PRODUCTION_USER@$PRODUCTION_SERVER "cd /var/www/video-api && docker-compose pull && docker-compose up -d --force-recreate"
+#   environment:
+#     name: production
+#     url: https://video-api.example.com

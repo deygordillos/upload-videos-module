@@ -2,10 +2,9 @@
 date_default_timezone_set('America/Santiago');
 error_reporting(E_ALL & ~E_DEPRECATED);
 
-define('AMBIENTE','v1');
-define('API_HOME_PATH', dirname(__FILE__) . '/'); 
-define('BASE_HOME_PATH', API_HOME_PATH);
-define('LOG_PATH', API_HOME_PATH . 'log/');
+define('APP_DEBUG', $_ENV['APP_DEBUG'] ?? 'false');
+define('BASE_HOME_PATH', dirname(__FILE__) . '/'); 
+define('LOG_PATH', BASE_HOME_PATH . 'log/');
 
 ini_set("log_errors", 1);
 ini_set("error_log", LOG_PATH . "/php-error-".date("Ymd").".log");
@@ -13,9 +12,7 @@ ini_set("error_log", LOG_PATH . "/php-error-".date("Ymd").".log");
 /**
  * Links
  */
-//define('URL_WS_MEU_PERU', 'https://pe-ws-meucust.simpledatacorp.com/TDC.php?wsdl'); 
-define('URL_WEB_PRINCIPAL', 'https://consent.simpledatacorp.com');
-define('URL_WEB_SIMPLEDATA', 'https://www.simpledata.solutions');
+define('URL_WEB_SIMPLEDATA', 'https://www.simpledatacorp.com');
 define('PREFIX_FONO_PAIS', 56);
 
 /**
@@ -24,7 +21,7 @@ define('PREFIX_FONO_PAIS', 56);
 define('USER_DB', $_ENV['BDD_USER'] ?? '');
 define('PASS_DB', $_ENV['BDD_PASS'] ?? '');
 define('HOST_DB', $_ENV['BDD_HOST'] ?? '');
-define('PORT_DB', $_ENV['BDD_PORT'] ?? 3306);
+define('PORT_DB', (int)($_ENV['BDD_PORT'] ?? 3306));
 define('SCHEMA_DB', $_ENV['BDD_SCHEMA'] ?? '');
 
 /**
@@ -48,17 +45,20 @@ define('ERROR_CODE_INTERNAL', '300');
 define('ERROR_DESC_INTERNAL', 'Error, please contact the administrator.');
 define('ERROR_CODE_UNAVAILABLE_WORKFLOW', '501');
 define('ERROR_DESC_UNAVAILABLE_WORKFLOW', 'Workflow unavaiable.');
-
+define('ERROR_CODE_500', '500');
+define('ERROR_DESC_500', 'Error 500 en la respuesta');
 
 // HTTP STATUS CODE
-define('ERROR_CODE_SUCCESS', 200);
+define('ERROR_CODE_SUCCESS', "200");
 define('ERROR_DESC_SUCCESS', 'Operation success');
-define('ERROR_CODE_BAD_REQUEST', 400);
+define('ERROR_CODE_BAD_REQUEST', "400");
 define('ERROR_DESC_BAD_REQUEST', 'Bad Request');
-define('ERROR_CODE_UNAUTHORIZED', 401);
+define('ERROR_CODE_UNAUTHORIZED', "401");
 define('ERROR_DESC_UNAUTHORIZED', 'Unauthorized');
 define('ERROR_MESSAGE_UNAUTHORIZED', 'You must to authenticate for use this API.');
-define('ERROR_CODE_NOT_FOUND', 404);
+define('ERROR_CODE_NOT_FOUND', "404");
 define('ERROR_DESC_NOT_FOUND', 'Not Found');
-define('ERROR_CODE_INTERNAL_SERVER', 500);
+define('ERROR_CODE_NO_FOUND_RECORD', "404");
+define('ERROR_DESC_NO_FOUND_RECORD', 'No records found');
+define('ERROR_CODE_INTERNAL_SERVER', "500");
 define('ERROR_DESC_INTERNAL_SERVER', 'Interval Server Error');
