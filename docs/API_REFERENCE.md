@@ -58,9 +58,9 @@ Content-Type: multipart/form-data
 **Body (multipart/form-data)**
 | Campo | Tipo | Requerido | Descripción |
 |-------|------|-----------|-------------|
-| `video` | file | Sí | Archivo de video (max 100MB) |
+| `video` | file | Sí | Archivo de video (max 500MB) |
 | `project_id` | string | Sí | Identificador del proyecto |
-| `video_identifier` | string | Sí | Identificador único del video |
+| `video_identifier` | string | No | Identificador único del video (generado automáticamente si no se proporciona) |
 | `metadata` | string | No | JSON con metadatos adicionales |
 
 **Tipos MIME aceptados**
@@ -81,9 +81,9 @@ Content-Type: multipart/form-data
   "data": {
     "id": 1,
     "project_id": "PROJECT_TEST",
-    "video_identifier": "VIDEO_TEST_001",
+    "video_identifier": "VIDEO_1734567890_a3f2b8c1",
     "original_filename": "videotest_20251211.mp4",
-    "file_path": "PROJECT_TEST/2025/12/11/VIDEO_TEST_001/videotest_20251211.mp4",
+    "file_path": "PROJECT_TEST/2025/12/11/VIDEO_1734567890_a3f2b8c1_videotest_20251211.mp4",
     "file_size": 6990444,
     "mime_type": "video/mp4",
     "duration": null,
@@ -95,6 +95,11 @@ Content-Type: multipart/form-data
     "updated_at": "2025-12-11 18:51:49"
   }
 }
+
+**Nota sobre videoIdentifier**: 
+- Si no se proporciona `video_identifier` en el request, el backend genera automáticamente uno con el formato: `VIDEO_{timestamp}_{randomhex}`
+- Ejemplo: `VIDEO_1734567890_a3f2b8c1`
+- La estructura de almacenamiento es: `{project_id}/{año}/{mes}/{día}/{video_identifier}_{filename}`
 ```
 
 **Response 400 Bad Request**

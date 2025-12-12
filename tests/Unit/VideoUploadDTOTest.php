@@ -30,6 +30,25 @@ class VideoUploadDTOTest extends TestCase
         $this->assertEquals('video/mp4', $dto->mimeType);
     }
 
+    public function testVideoUploadDTOWithNullIdentifier(): void
+    {
+        // videoIdentifier should be optional (null allowed)
+        $dto = new VideoUploadDTO(
+            projectId: 'project_1',
+            videoIdentifier: null,
+            originalFilename: 'test_video.mp4',
+            tmpFilePath: '/tmp/phpXXXXXX',
+            fileSize: 1024000,
+            mimeType: 'video/mp4'
+        );
+
+        $this->assertEquals('project_1', $dto->projectId);
+        $this->assertNull($dto->videoIdentifier);
+        $this->assertEquals('test_video.mp4', $dto->originalFilename);
+        $this->assertEquals(1024000, $dto->fileSize);
+        $this->assertEquals('video/mp4', $dto->mimeType);
+    }
+
     public function testInvalidProjectIdThrowsException(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -37,7 +56,7 @@ class VideoUploadDTOTest extends TestCase
 
         new VideoUploadDTO(
             projectId: 'invalid project!',
-            videoIdentifier: 'video_001',
+            videoIdentifier: null,
             originalFilename: 'test.mp4',
             tmpFilePath: '/tmp/test',
             fileSize: 1024,
@@ -52,7 +71,7 @@ class VideoUploadDTOTest extends TestCase
 
         new VideoUploadDTO(
             projectId: 'project_1',
-            videoIdentifier: 'video_001',
+            videoIdentifier: null,
             originalFilename: 'test.mp4',
             tmpFilePath: '/tmp/test',
             fileSize: 600000000, // 600MB
@@ -67,7 +86,7 @@ class VideoUploadDTOTest extends TestCase
 
         new VideoUploadDTO(
             projectId: 'project_1',
-            videoIdentifier: 'video_001',
+            videoIdentifier: null,
             originalFilename: 'test.txt',
             tmpFilePath: '/tmp/test',
             fileSize: 1024,
@@ -97,6 +116,34 @@ class VideoUploadDTOTest extends TestCase
 
         $this->assertEquals('project_1', $dto->projectId);
         $this->assertEquals('video_001', $dto->videoIdentifier);
+        $this->assertEquals('test_video.mp4', $dto->originalFilename);
+        $this->assertEquals('127.0.0.1', $dto->uploadIp);
+        $this->assertEquals(['key' => 'value'], $dto->metadata);
+    }
+
+    public function testFromUploadedFileWithoutVideoIdentifier(): void
+    {
+        $file = [
+            'name' => 'test_video.mp4',
+            'tmp_name' => '/tmp/phpXXXXXX',
+            'size' => 1024000,
+            'type' => 'video/mp4',
+            'error' => 0
+        ];
+
+        $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+        $_SERVER['HTTP_USER_AGENT'] = 'PHPUnit Test';
+
+        // videoIdentifier is optional, backend should generate it
+        $dto = VideoUploadDTO::fromUploadedFile(
+            $file,
+            'project_1',
+            null,
+            ['key' => 'value']
+        );
+
+        $this->assertEquals('project_1', $dto->projectId);
+        $this->assertNull($dto->videoIdentifier);
         $this->assertEquals('test_video.mp4', $dto->originalFilename);
         $this->assertEquals('127.0.0.1', $dto->uploadIp);
         $this->assertEquals(['key' => 'value'], $dto->metadata);
