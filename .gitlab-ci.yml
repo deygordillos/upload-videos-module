@@ -76,11 +76,13 @@ integration_tests:
     - when: always
   needs: ["install_deps"]
   services:
-    - mysql:8.0
+    - name: mysql:8.0
+      alias: mysql
+      command: ["--default-authentication-plugin=mysql_native_password", "--skip-ssl"]
   variables:
     MYSQL_ROOT_PASSWORD: root
     MYSQL_DATABASE: sdc_videos
-    MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    MYSQL_HOST: mysql
     BDD_HOST: mysql
     BDD_USER: root
     BDD_PASS: root
@@ -93,7 +95,7 @@ integration_tests:
     - |
       echo "Waiting for MySQL to be ready..."
       for i in {1..30}; do
-        if mysql -h mysql -u root -proot -e "SELECT 1" 2>/dev/null; then
+        if mysql -h mysql -u root -proot --skip-ssl -e "SELECT 1" 2>/dev/null; then
           echo "MySQL is ready!"
           break
         fi
@@ -101,7 +103,7 @@ integration_tests:
         sleep 2
       done
     # Create database schema
-    - mysql -h mysql -u root -proot sdc_videos < migrations/001_create_videos_table.sql
+    - mysql -h mysql -u root -proot --skip-ssl sdc_videos < migrations/001_create_videos_table.sql
   script:
     - php -v
     - composer test:integration
