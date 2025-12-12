@@ -90,9 +90,6 @@ integration_tests:
     BDD_PORT: "3306"
     BDD_SCHEMA: sdc_videos
   before_script:
-    # Debug: Check if test video exists
-    - ls -lah tests/fixtures/ || echo "tests/fixtures/ directory not found"
-    - if [ -f tests/fixtures/videotest_20251211.mp4 ]; then echo "Video file found"; else echo "Video file NOT found"; fi
     # Install PHP extensions, MySQL client and Composer
     - apt-get update && apt-get install -y default-mysql-client curl unzip
     - docker-php-ext-install pdo pdo_mysql
