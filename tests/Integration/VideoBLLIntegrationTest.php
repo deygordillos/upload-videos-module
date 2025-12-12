@@ -29,11 +29,23 @@ class VideoBLLIntegrationTest extends TestCase
             $_ENV['BDD_PASS'] ?? '',
             $_ENV['BDD_HOST'] ?? 'localhost',
             (int)($_ENV['BDD_PORT'] ?? 3306),
-            $_ENV['BDD_SCHEMA'] ?? 'sdc_videos'
+            $_ENV['BDD_SCHEMA'] ?? 'sdc_videos',
+            true // Enable debug mode
         );
 
+        // Verify database connection
+        if ($this->db->getError() !== '0') {
+            $this->markTestSkipped('Database connection failed: ' . $this->db->getErrorDescription());
+        }
+
+        // Verify videos table exists
+        $checkTable = $this->db->executeStmtResultAssoc("SHOW TABLES LIKE 'videos'");
+        if (empty($checkTable)) {
+            $this->markTestSkipped('Videos table does not exist. Run migrations first.');
+        }
+
         // Setup test upload directory
-        $this->testUploadPath = __DIR__ . '/../uploads';
+        $this->testUploadPath = BASE_HOME_PATH . 'uploads/test_' . time();
         if (!is_dir($this->testUploadPath)) {
             mkdir($this->testUploadPath, 0777, true);
         }
