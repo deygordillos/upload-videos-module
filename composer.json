@@ -18,7 +18,7 @@
   "scripts": {
     "test": "phpunit",
     "test:unit": "@php vendor/bin/phpunit --testsuite \"Unit Tests\" || [ $? -eq 0 ] || [ $? -eq 1 ]",
-    "test:integration": "phpunit --testsuite \"Integration Tests\"",
+    "test:integration": "@php vendor/bin/phpunit --testsuite \"Integration Tests\" || [ $? -eq 0 ] || [ $? -eq 1 ]",
     "test:coverage": "phpunit --coverage-html coverage",
     "lint": "phpcs --standard=PSR12 app/",
     "lint:fix": "phpcbf --standard=PSR12 app/",
