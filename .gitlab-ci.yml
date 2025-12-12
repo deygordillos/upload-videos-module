@@ -70,7 +70,7 @@ unit_tests:
 # -------------------------
 integration_tests:
   stage: test
-  image: composer:latest
+  image: php:8.3-cli
   tags: ["docker"]
   rules:
     - when: always
@@ -86,8 +86,8 @@ integration_tests:
     BDD_PORT: "3306"
     BDD_SCHEMA: sdc_videos
   before_script:
-    # Wait for MySQL to be ready
-    - apt-get update && apt-get install -y mysql-client
+    # Install MySQL client
+    - apt-get update && apt-get install -y default-mysql-client
     - |
       until mysql -h mysql -u root -proot -e "SELECT 1" &> /dev/null; do
         echo "Waiting for MySQL..."
