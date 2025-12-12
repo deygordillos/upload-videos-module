@@ -42,7 +42,7 @@ namespace Libraries;
  * $DayLog->WriteLog("Este es un mensaje de prueba... \n");
  * 
  * Escritura en /tmp/log/MODULE_NAME-YYYYMMDD.log</pre>
- * @version   0.01
+ * @version   1.1
  * @since     2016-04-25
  * @author hherrera
  */
@@ -86,7 +86,14 @@ class DayLog {
             $this->szHomepath = $szHomepath;
             $this->szPathLog = $szPathLog;
             $this->szVptModuleName = gethostname() . '_' . $szVptModuleName;
-            $this->szFullPathLog = $this->szHomepath . '/' . $this->szPathLog . '/' . $this->szVptModuleName . '-' . date('Ymd') . self::EXTENSION_FILE_LOG;
+            
+            // Create log directory if it doesn't exist
+            $logDirectory = $this->szHomepath . '/' . $this->szPathLog;
+            if (!is_dir($logDirectory)) {
+                @mkdir($logDirectory, 0755, true);
+            }
+            
+            $this->szFullPathLog = $logDirectory . '/' . $this->szVptModuleName . '-' . date('Ymd') . self::EXTENSION_FILE_LOG;
             ini_set('error_log', $this->szFullPathLog );
 
             $this->setError(self::ERROR_CODE_OK);

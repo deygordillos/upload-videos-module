@@ -110,9 +110,10 @@ class VideoBLLIntegrationTest extends TestCase
         $this->assertFileExists($filePath, 'Uploaded video file should exist');
 
         // Verify file size matches
+        $uploadedSize = file_exists($filePath) ? filesize($filePath) : 0;
         $this->assertEquals(
             filesize($this->testVideoPath),
-            filesize($filePath),
+            $uploadedSize,
             'Uploaded file size should match original'
         );
     }
