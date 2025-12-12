@@ -47,17 +47,21 @@ class VideoBLL extends \App\BaseClass
         try {
             $this->log->writeLog("{$this->tx} [video_bll] Starting video upload process\n");
             
+            // Generate unique identifier if not provided
+            $videoIdentifier = $videoDTO->videoIdentifier ?? $this->generateVideoIdentifier();
+            $this->log->writeLog("{$this->tx} [video_bll] Video identifier: {$videoIdentifier}\n");
+            
             // Validate video file
             $this->validateVideoFile($videoDTO);
             
             // Check for duplicate
             $existing = $this->dao->findByProjectAndIdentifier(
                 $videoDTO->projectId, 
-                $videoDTO->videoIdentifier
+                $videoIdentifier
             );
             
             if ($existing !== null) {
-                $this->log->writeLog("{$this->tx} [video_bll] Duplicate video found: {$videoDTO->videoIdentifier}\n");
+                $this->log->writeLog("{$this->tx} [video_bll] Duplicate video found: {$videoIdentifier}\n");
                 return ApiResponseDTO::error(
                     'Video with this identifier already exists for this project',
                     409,
@@ -68,7 +72,7 @@ class VideoBLL extends \App\BaseClass
             // Generate storage path
             $storagePath = $this->generateStoragePath(
                 $videoDTO->projectId,
-                $videoDTO->videoIdentifier,
+                $videoIdentifier,
                 $videoDTO->originalFilename
             );
             
@@ -84,8 +88,21 @@ class VideoBLL extends \App\BaseClass
             // Get relative path for database storage
             $relativePath = $this->getRelativePath($storagePath);
             
+            // Create updated DTO with generated identifier
+            $updatedDTO = new VideoUploadDTO(
+                projectId: $videoDTO->projectId,
+                videoIdentifier: $videoIdentifier,
+                originalFilename: $videoDTO->originalFilename,
+                tmpFilePath: $videoDTO->tmpFilePath,
+                fileSize: $videoDTO->fileSize,
+                mimeType: $videoDTO->mimeType,
+                uploadIp: $videoDTO->uploadIp,
+                userAgent: $videoDTO->userAgent,
+                metadata: $videoDTO->metadata
+            );
+            
             // Insert record in database
-            $videoId = $this->dao->insert($videoDTO, $relativePath);
+            $videoId = $this->dao->insert($updatedDTO, $relativePath);
             
             if ($videoId === null) {
                 // Rollback: delete uploaded file
@@ -251,7 +268,17 @@ class VideoBLL extends \App\BaseClass
     }
 
     /**
-     * Generate storage path: uploads/project/year/month/day/identifier/filename
+     * Generate unique video identifier
+     * Format: VIDEO_timestamp_randomhex
+     * @return string
+     */
+    private function generateVideoIdentifier(): string
+    {
+        return sprintf('VIDEO_%d_%s', time(), bin2hex(random_bytes(4)));
+    }
+
+    /**
+     * Generate storage path: uploads/project/year/month/day/videoIdentifier_filename
      * @param string $projectId
      * @param string $videoIdentifier
      * @param string $filename
@@ -267,9 +294,9 @@ class VideoBLL extends \App\BaseClass
         // Sanitize filename
         $safeFilename = $this->sanitizeFilename($filename);
         
-        // Build path: project/year/month/day/identifier/filename
+        // Build path: project/year/month/day/videoIdentifier_filename
         return sprintf(
-            '%s/%s/%s/%s/%s/%s/%s',
+            '%s/%s/%s/%s/%s/%s_%s',
             $this->uploadBasePath,
             $projectId,
             $year,
