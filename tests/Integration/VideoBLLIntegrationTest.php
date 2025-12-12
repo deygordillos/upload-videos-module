@@ -29,8 +29,7 @@ class VideoBLLIntegrationTest extends TestCase
             $_ENV['BDD_PASS'] ?? '',
             $_ENV['BDD_HOST'] ?? 'localhost',
             (int)($_ENV['BDD_PORT'] ?? 3306),
-            $_ENV['BDD_SCHEMA'] ?? 'sdc_videos',
-            true // Enable debug mode
+            $_ENV['BDD_SCHEMA'] ?? 'sdc_videos'
         );
 
         // Verify database connection

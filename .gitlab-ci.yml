@@ -51,9 +51,9 @@ install_deps:
       - vendor/
 
 # -------------------------
-# 🧪 3. Tests (PHPUnit)
+# 🧪 3. Tests Unitarios (PHPUnit)
 # -------------------------
-php_tests:
+unit_tests:
   stage: test
   image: composer:latest
   tags: ["docker"]
@@ -62,11 +62,11 @@ php_tests:
   needs: ["install_deps"]
   script:
     - php -v
-    - composer test
+    - composer test:unit
   coverage: '/^\s*Lines:\s*\d+.\d+\%/'
 
 # -------------------------
-# 🧪 3b. Integration Tests
+# 🧪 3b. Tests de Integración
 # -------------------------
 integration_tests:
   stage: test
@@ -95,14 +95,10 @@ integration_tests:
       done
     - echo "MySQL is ready"
     # Create database schema
-    - echo "Running migrations..."
-    - mysql -h mysql -u root -proot sdc_videos < migrations/001_create_videos_table.sql || (echo "Migration failed" && exit 1)
-    - echo "Verifying tables..."
-    - mysql -h mysql -u root -proot sdc_videos -e "SHOW TABLES;"
-    - mysql -h mysql -u root -proot sdc_videos -e "DESCRIBE videos;"
+    - mysql -h mysql -u root -proot sdc_videos < migrations/001_create_videos_table.sql
   script:
     - php -v
-    - ./vendor/bin/phpunit --testsuite "Integration Tests" --testdox
+    - composer test:integration
   allow_failure: true
 
 # -------------------------
