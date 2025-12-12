@@ -89,8 +89,9 @@ integration_tests:
     BDD_PORT: "3306"
     BDD_SCHEMA: sdc_videos
   before_script:
-    # Install MySQL client
-    - apt-get update && apt-get install -y default-mysql-client
+    # Install MySQL client and Composer
+    - apt-get update && apt-get install -y default-mysql-client curl unzip
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
     # Wait for MySQL with timeout
     - |
       echo "Waiting for MySQL to be ready..."
