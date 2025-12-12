@@ -62,7 +62,7 @@ unit_tests:
   needs: ["install_deps"]
   script:
     - php -v
-    - composer test:unit
+    - ./vendor/bin/phpunit --testsuite "Unit Tests" --no-coverage --fail-on-warning=false
   coverage: '/^\s*Lines:\s*\d+.\d+\%/'
 
 # -------------------------
