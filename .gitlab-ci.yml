@@ -80,6 +80,7 @@ integration_tests:
   variables:
     MYSQL_ROOT_PASSWORD: root
     MYSQL_DATABASE: sdc_videos
+    MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     BDD_HOST: mysql
     BDD_USER: root
     BDD_PASS: root
@@ -88,12 +89,17 @@ integration_tests:
   before_script:
     # Install MySQL client
     - apt-get update && apt-get install -y default-mysql-client
+    # Wait for MySQL with timeout
     - |
-      until mysql -h mysql -u root -proot -e "SELECT 1" &> /dev/null; do
-        echo "Waiting for MySQL..."
+      echo "Waiting for MySQL to be ready..."
+      for i in {1..30}; do
+        if mysql -h mysql -u root -proot -e "SELECT 1" 2>/dev/null; then
+          echo "MySQL is ready!"
+          break
+        fi
+        echo "Attempt $i/30: MySQL not ready yet..."
         sleep 2
       done
-    - echo "MySQL is ready"
     # Create database schema
     - mysql -h mysql -u root -proot sdc_videos < migrations/001_create_videos_table.sql
   script:
