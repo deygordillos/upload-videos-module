@@ -107,17 +107,22 @@ class VideoBLLIntegrationTest extends TestCase
         // Verify file was moved to correct location
         $this->assertArrayHasKey('file_path', $result->data);
         
-        // Debug: Show what path was returned
-        echo "\nDEBUG Upload Response:\n";
-        echo "file_path from response: {$result->data['file_path']}\n";
+        // Debug: Show paths
+        echo "\nDEBUG Source and Destination:\n";
+        echo "testVideoPath (source): {$this->testVideoPath}\n";
+        echo "Source file exists: " . (file_exists($this->testVideoPath) ? 'YES' : 'NO') . "\n";
+        if (file_exists($this->testVideoPath)) {
+            echo "Source file size: " . filesize($this->testVideoPath) . " bytes\n";
+        }
+        echo "\nfile_path from response: {$result->data['file_path']}\n";
         echo "testUploadPath: {$this->testUploadPath}\n";
         
         $filePath = $this->testUploadPath . '/' . $result->data['file_path'];
         echo "Constructed file path: $filePath\n";
-        echo "File exists: " . (file_exists($filePath) ? 'YES' : 'NO') . "\n";
+        echo "Uploaded file exists: " . (file_exists($filePath) ? 'YES' : 'NO') . "\n";
         
         if (file_exists($filePath)) {
-            echo "File size: " . filesize($filePath) . " bytes\n";
+            echo "Uploaded file size: " . filesize($filePath) . " bytes\n";
         }
         
         $this->assertFileExists($filePath, 'Uploaded video file should exist');
