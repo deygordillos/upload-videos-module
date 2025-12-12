@@ -89,8 +89,9 @@ integration_tests:
     BDD_PORT: "3306"
     BDD_SCHEMA: sdc_videos
   before_script:
-    # Install MySQL client and Composer
+    # Install PHP extensions, MySQL client and Composer
     - apt-get update && apt-get install -y default-mysql-client curl unzip
+    - docker-php-ext-install pdo pdo_mysql
     - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
     # Wait for MySQL with timeout
     - |
