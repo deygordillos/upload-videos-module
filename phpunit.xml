@@ -6,7 +6,8 @@
          executionOrder="depends,defects"
          beStrictAboutOutputDuringTests="true"
          failOnRisky="true"
-         failOnWarning="false">
+         failOnWarning="false"
+         ignoreDeprecatedCodeUnitsFromCodeCoverage="true">
     <testsuites>
         <testsuite name="Unit Tests">
             <directory>tests/Unit</directory>
@@ -15,14 +16,14 @@
             <directory>tests/Integration</directory>
         </testsuite>
     </testsuites>
-
+    <!-- Coverage disabled - requires Xdebug
     <coverage>
         <report>
             <html outputDirectory="tests/coverage"/>
             <text outputFile="php://stdout" showUncoveredFiles="false"/>
         </report>
     </coverage>
-
+    -->
     <php>
         <env name="DB_HOST" value="localhost"/>
         <env name="DB_PORT" value="3306"/>
