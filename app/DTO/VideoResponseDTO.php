@@ -6,7 +6,7 @@ namespace App\DTO;
 
 /**
  * DTO for video response
- * 
+ *
  * @version 1.0.0
  * @author SimpleData Corp
  */

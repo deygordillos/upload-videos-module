@@ -123,7 +123,7 @@ phpstan:
     - when: always
   needs: ["install_deps"]
   script:
-    - composer analyse
+    - composer analyse 2>&1 | tee phpstan-report.txt
   artifacts:
     when: always
     paths:
@@ -142,13 +142,13 @@ phpcs:
     - when: always
   needs: ["install_deps"]
   script:
-    - composer lint || true
+    - composer lint 2>&1 | tee phpcs-report.txt; test ${PIPESTATUS[0]} -eq 0
   artifacts:
     when: always
     paths:
       - phpcs-report.txt
     expire_in: 1 week
-  allow_failure: true
+  allow_failure: false
 
 # -------------------------
 # 🧪 6. Secret Scanning - Gitleaks

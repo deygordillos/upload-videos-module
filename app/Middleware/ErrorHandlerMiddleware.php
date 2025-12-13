@@ -37,10 +37,9 @@ final class ErrorHandlerMiddleware implements MiddlewareInterface
      * @return ResponseInterface The response
      */
     public function process(
-        ServerRequestInterface $request, 
+        ServerRequestInterface $request,
         RequestHandlerInterface $handler
-    ): ResponseInterface
-    {
+    ): ResponseInterface {
         $errorTypes = E_ALL;
 
         // Set custom php error handler

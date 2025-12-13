@@ -6,7 +6,7 @@ namespace App\DTO;
 
 /**
  * DTO for video upload request
- * 
+ *
  * @version 1.0.0
  * @author SimpleData Corp
  */

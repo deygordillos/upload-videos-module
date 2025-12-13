@@ -9,7 +9,7 @@ use Libraries\DayLog;
 /**
  * API Authentication Middleware
  * Validates API keys and implements rate limiting
- * 
+ *
  * @version 1.0.0
  * @author SimpleData Corp
  */
@@ -18,22 +18,22 @@ class ApiAuthMiddleware
     private DayLog $log;
     private array $validApiKeys;
     private string $tx;
-    
+
     // Rate limiting: requests per minute per API key
     private const RATE_LIMIT = 60;
     private const RATE_WINDOW = 60; // seconds
-    
+
     private static array $rateLimitCache = [];
 
     public function __construct(DayLog $log, string $tx)
     {
         $this->log = $log;
         $this->tx = $tx;
-        
+
         // Load valid API keys from environment
         $apiKeysEnv = $_ENV['VALID_API_KEYS'] ?? '';
         $this->validApiKeys = array_filter(explode(',', $apiKeysEnv));
-        
+
         if (empty($this->validApiKeys)) {
             $this->log->writeLog("{$this->tx} [auth_warning] No valid API keys configured\n");
         }
@@ -47,7 +47,7 @@ class ApiAuthMiddleware
     {
         // Check for API key in header
         $apiKey = $this->getApiKeyFromRequest();
-        
+
         if (empty($apiKey)) {
             $this->log->writeLog("{$this->tx} [auth] Missing API key\n");
             return [
@@ -78,7 +78,7 @@ class ApiAuthMiddleware
         }
 
         $this->log->writeLog("{$this->tx} [auth] Authentication successful\n");
-        
+
         return [
             'authenticated' => true,
             'error' => null,
@@ -121,7 +121,7 @@ class ApiAuthMiddleware
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -134,7 +134,7 @@ class ApiAuthMiddleware
     {
         $now = time();
         $keyHash = hash('sha256', $apiKey);
-        
+
         // Initialize rate limit data if not exists
         if (!isset(self::$rateLimitCache[$keyHash])) {
             self::$rateLimitCache[$keyHash] = [
@@ -142,23 +142,23 @@ class ApiAuthMiddleware
                 'window_start' => $now
             ];
         }
-        
+
         $cache = &self::$rateLimitCache[$keyHash];
-        
+
         // Remove requests outside the current window
         $cache['requests'] = array_filter(
             $cache['requests'],
             fn($timestamp) => $timestamp > ($now - self::RATE_WINDOW)
         );
-        
+
         // Check if limit exceeded
         if (count($cache['requests']) >= self::RATE_LIMIT) {
             return false;
         }
-        
+
         // Add current request
         $cache['requests'][] = $now;
-        
+
         return true;
     }
 
@@ -168,14 +168,14 @@ class ApiAuthMiddleware
     public static function cleanRateLimitCache(): void
     {
         $now = time();
-        
+
         foreach (self::$rateLimitCache as $key => &$data) {
             // Remove entries older than the rate window
             $data['requests'] = array_filter(
                 $data['requests'],
                 fn($timestamp) => $timestamp > ($now - self::RATE_WINDOW)
             );
-            
+
             // Remove empty entries
             if (empty($data['requests'])) {
                 unset(self::$rateLimitCache[$key]);

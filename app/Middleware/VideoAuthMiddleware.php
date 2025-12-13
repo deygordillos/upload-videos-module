@@ -15,7 +15,7 @@ use Slim\Psr7\Response as SlimResponse;
 /**
  * API Authentication Middleware for Slim 4
  * Validates API keys and implements rate limiting
- * 
+ *
  * @version 1.0.0
  * @author SimpleData Corp
  */
@@ -23,21 +23,21 @@ class VideoAuthMiddleware implements MiddlewareInterface
 {
     private DayLog $log;
     private array $validApiKeys;
-    
+
     // Rate limiting: requests per minute per API key
     private const RATE_LIMIT = 60;
     private const RATE_WINDOW = 60; // seconds
-    
+
     private static array $rateLimitCache = [];
 
     public function __construct()
     {
         $this->log = new DayLog(BASE_HOME_PATH, 'VideoAuth');
-        
+
         // Load valid API keys from environment
         $apiKeysEnv = $_ENV['VALID_API_KEYS'] ?? '';
         $this->validApiKeys = array_filter(explode(',', $apiKeysEnv));
-        
+
         if (empty($this->validApiKeys)) {
             $tx = substr(uniqid(), 3);
             $this->log->writeLog("{$tx} [auth_warning] No valid API keys configured\n");
@@ -46,7 +46,7 @@ class VideoAuthMiddleware implements MiddlewareInterface
 
     /**
      * Process middleware
-     * 
+     *
      * @param Request $request
      * @param RequestHandlerInterface $handler
      * @return Response
@@ -54,7 +54,7 @@ class VideoAuthMiddleware implements MiddlewareInterface
     public function process(Request $request, RequestHandlerInterface $handler): Response
     {
         $tx = substr(uniqid(), 3);
-        
+
         // Skip authentication for health check
         $uri = $request->getUri()->getPath();
         if (preg_match('#/health$#', $uri)) {
@@ -63,7 +63,7 @@ class VideoAuthMiddleware implements MiddlewareInterface
 
         // Get API key from request
         $apiKey = $this->getApiKeyFromRequest($request);
-        
+
         if (empty($apiKey)) {
             $this->log->writeLog("{$tx} [auth] Missing API key\n");
             return $this->unauthorizedResponse('API key is required', 401);
@@ -85,10 +85,10 @@ class VideoAuthMiddleware implements MiddlewareInterface
         }
 
         $this->log->writeLog("{$tx} [auth] Authentication successful\n");
-        
+
         // Clean old cache entries periodically
         self::cleanRateLimitCache();
-        
+
         // Continue to next middleware/route
         return $handler->handle($request);
     }
@@ -130,7 +130,7 @@ class VideoAuthMiddleware implements MiddlewareInterface
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -143,7 +143,7 @@ class VideoAuthMiddleware implements MiddlewareInterface
     {
         $now = time();
         $keyHash = hash('sha256', $apiKey);
-        
+
         // Initialize rate limit data if not exists
         if (!isset(self::$rateLimitCache[$keyHash])) {
             self::$rateLimitCache[$keyHash] = [
@@ -151,23 +151,23 @@ class VideoAuthMiddleware implements MiddlewareInterface
                 'window_start' => $now
             ];
         }
-        
+
         $cache = &self::$rateLimitCache[$keyHash];
-        
+
         // Remove requests outside the current window
         $cache['requests'] = array_filter(
             $cache['requests'],
             fn($timestamp) => $timestamp > ($now - self::RATE_WINDOW)
         );
-        
+
         // Check if limit exceeded
         if (count($cache['requests']) >= self::RATE_LIMIT) {
             return false;
         }
-        
+
         // Add current request
         $cache['requests'][] = $now;
-        
+
         return true;
     }
 
@@ -177,14 +177,14 @@ class VideoAuthMiddleware implements MiddlewareInterface
     private static function cleanRateLimitCache(): void
     {
         $now = time();
-        
+
         foreach (self::$rateLimitCache as $key => &$data) {
             // Remove entries older than the rate window
             $data['requests'] = array_filter(
                 $data['requests'],
                 fn($timestamp) => $timestamp > ($now - self::RATE_WINDOW)
             );
-            
+
             // Remove empty entries
             if (empty($data['requests'])) {
                 unset(self::$rateLimitCache[$key]);
@@ -203,7 +203,7 @@ class VideoAuthMiddleware implements MiddlewareInterface
         $result = ApiResponseDTO::error($description, $code);
         $response = new SlimResponse();
         $response->getBody()->write(json_encode($result->toArray()));
-        
+
         return $response
             ->withHeader('Content-Type', 'application/json')
             ->withStatus($code);
