@@ -6,7 +6,7 @@ namespace App\DTO;
 
 /**
  * Standard API Response DTO
- * 
+ *
  * @version 1.0.0
  * @author SimpleData Corp
  */

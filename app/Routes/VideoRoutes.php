@@ -16,7 +16,7 @@ use Slim\Routing\RouteCollectorProxy;
 
 /**
  * Video Upload Routes for Slim 4
- * 
+ *
  * @version 1.0.0
  * @author SimpleData Corp
  */
@@ -33,7 +33,7 @@ class VideoRoutes
             $tx = substr(uniqid(), 3);
             $db = new DBConnectorPDO(USER_DB, PASS_DB, HOST_DB, PORT_DB, SCHEMA_DB);
             $db->setTx($tx);
-            
+
             $dbStatus = 'unknown';
             try {
                 $db->openConnection();
@@ -41,7 +41,7 @@ class VideoRoutes
             } catch (\Throwable $e) {
                 $dbStatus = 'error: ' . $e->getMessage();
             }
-            
+
             $result = [
                 'status' => [
                     'code' => 200,
@@ -54,7 +54,7 @@ class VideoRoutes
                     'timestamp' => date('Y-m-d H:i:s')
                 ]
             ];
-            
+
             $response->getBody()->write(json_encode($result));
             return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
         });
@@ -63,17 +63,17 @@ class VideoRoutes
         $group->post('/upload', function (Request $request, Response $response) {
             $tx = substr(uniqid(), 3);
             $log = new DayLog(BASE_HOME_PATH, 'VideoUpload');
-            
+
             try {
                 // Initialize database connection
                 $db = new DBConnectorPDO(USER_DB, PASS_DB, HOST_DB, PORT_DB, SCHEMA_DB);
                 $db->setTx($tx);
                 $db->openConnection();
-                
+
                 // Get uploaded files
                 $uploadedFiles = $request->getUploadedFiles();
                 $parsedBody = $request->getParsedBody();
-                
+
                 // Validate required fields
                 if (empty($parsedBody['project_id'])) {
                     $result = ApiResponseDTO::error('project_id is required', 400);
@@ -131,10 +131,9 @@ class VideoRoutes
                 // Process upload
                 $videoBLL = new VideoBLL($db, $uploadPath);
                 $apiResponse = $videoBLL->uploadVideo($videoDTO);
-                
+
                 $response->getBody()->write(json_encode($apiResponse->toArray()));
                 return $response->withHeader('Content-Type', 'application/json')->withStatus($apiResponse->code);
-                
             } catch (\InvalidArgumentException $e) {
                 $log->writeLog("{$tx} [upload_error] Validation error: " . $e->getMessage() . "\n");
                 $result = ApiResponseDTO::error($e->getMessage(), 400);
@@ -156,10 +155,10 @@ class VideoRoutes
             $db = new DBConnectorPDO(USER_DB, PASS_DB, HOST_DB, PORT_DB, SCHEMA_DB);
             $db->setTx($tx);
             $db->openConnection();
-            
+
             $videoBLL = new VideoBLL($db);
             $apiResponse = $videoBLL->getVideoById((int)$args['id']);
-            
+
             $response->getBody()->write(json_encode($apiResponse->toArray()));
             return $response->withHeader('Content-Type', 'application/json')->withStatus($apiResponse->code);
         });
@@ -170,14 +169,14 @@ class VideoRoutes
             $db = new DBConnectorPDO(USER_DB, PASS_DB, HOST_DB, PORT_DB, SCHEMA_DB);
             $db->setTx($tx);
             $db->openConnection();
-            
+
             $queryParams = $request->getQueryParams();
             $page = isset($queryParams['page']) ? (int)$queryParams['page'] : 1;
             $perPage = isset($queryParams['per_page']) ? (int)$queryParams['per_page'] : 50;
-            
+
             $videoBLL = new VideoBLL($db);
             $apiResponse = $videoBLL->getVideosByProject($args['projectId'], $page, $perPage);
-            
+
             $response->getBody()->write(json_encode($apiResponse->toArray()));
             return $response->withHeader('Content-Type', 'application/json')->withStatus($apiResponse->code);
         });
@@ -188,10 +187,10 @@ class VideoRoutes
             $db = new DBConnectorPDO(USER_DB, PASS_DB, HOST_DB, PORT_DB, SCHEMA_DB);
             $db->setTx($tx);
             $db->openConnection();
-            
+
             $videoBLL = new VideoBLL($db);
             $apiResponse = $videoBLL->deleteVideo((int)$args['id']);
-            
+
             $response->getBody()->write(json_encode($apiResponse->toArray()));
             return $response->withHeader('Content-Type', 'application/json')->withStatus($apiResponse->code);
         });

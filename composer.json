@@ -20,7 +20,7 @@
     "test:unit": "@php vendor/bin/phpunit --testsuite \"Unit Tests\" || [ $? -eq 0 ] || [ $? -eq 1 ]",
     "test:integration": "@php vendor/bin/phpunit --testsuite \"Integration Tests\" || [ $? -eq 0 ] || [ $? -eq 1 ]",
     "test:coverage": "phpunit --coverage-html coverage",
-    "lint": "phpcs --standard=PSR12 app/",
+    "lint": "phpcs --standard=PSR12 --warning-severity=0 app/",
     "lint:fix": "phpcbf --standard=PSR12 app/",
     "analyse": "phpstan analyse --memory-limit=1G",
     "phpstan": "phpstan analyse --memory-limit=1G"

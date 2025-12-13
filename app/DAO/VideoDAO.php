@@ -10,13 +10,12 @@ use App\DTO\VideoResponseDTO;
 /**
  * Video Data Access Object
  * Handles all database operations for videos
- * 
+ *
  * @version 1.0.0
  * @author SimpleData Corp
  */
 class VideoDAO extends BaseDAO
 {
-
     /**
      * Insert a new video record
      * @param VideoUploadDTO $video
@@ -26,13 +25,13 @@ class VideoDAO extends BaseDAO
     public function insert(VideoUploadDTO $video, string $filePath): ?int
     {
         $metadataJson = $video->metadata ? json_encode($video->metadata) : null;
-        
+
         $query = "INSERT INTO videos (
                 project_id, video_identifier, original_filename, file_path, 
                 file_size, mime_type, upload_ip, user_agent, metadata, 
                 status, created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed', NOW(), NOW())";
-        
+
         $params = [
             $video->projectId,
             $video->videoIdentifier,
@@ -44,21 +43,21 @@ class VideoDAO extends BaseDAO
             $video->userAgent,
             $metadataJson
         ];
-        
+
         $result = $this->executeStatement($query, $params);
-        
+
         if ($result && is_int($result)) {
             $this->log->writeLog("{$this->tx} [video_dao] Video inserted successfully: ID={$result}\n");
-            
+
             // Log audit trail
             $this->insertAuditLog($result, 'upload', null, $video->uploadIp, [
                 'filename' => $video->originalFilename,
                 'size' => $video->fileSize
             ]);
-            
+
             return $result;
         }
-        
+
         return null;
     }
 
@@ -74,13 +73,13 @@ class VideoDAO extends BaseDAO
                 metadata, status, created_at, updated_at
             FROM videos
             WHERE id = ? AND deleted_at IS NULL";
-        
+
         $result = $this->executeSelect($query, [$id]);
-        
+
         if (!empty($result)) {
             return VideoResponseDTO::fromArray($result[0]);
         }
-        
+
         return null;
     }
 
@@ -97,13 +96,13 @@ class VideoDAO extends BaseDAO
                 metadata, status, created_at, updated_at
             FROM videos
             WHERE project_id = ? AND video_identifier = ? AND deleted_at IS NULL";
-        
+
         $result = $this->executeSelect($query, [$projectId, $videoIdentifier]);
-        
+
         if (!empty($result)) {
             return VideoResponseDTO::fromArray($result[0]);
         }
-        
+
         return null;
     }
 
@@ -123,14 +122,14 @@ class VideoDAO extends BaseDAO
             WHERE project_id = ? AND deleted_at IS NULL
             ORDER BY created_at DESC
             LIMIT {$limit} OFFSET {$offset}";
-        
+
         $result = $this->executeSelect($query, [$projectId]);
-        
+
         $videos = [];
         foreach ($result as $row) {
             $videos[] = VideoResponseDTO::fromArray($row);
         }
-        
+
         return $videos;
     }
 
@@ -146,7 +145,7 @@ class VideoDAO extends BaseDAO
         $query = "UPDATE videos 
             SET status = ?, error_message = ?, updated_at = NOW()
             WHERE id = ?";
-        
+
         $result = $this->executeStatement($query, [$status, $errorMessage, $id]);
         return is_bool($result) ? $result : false;
     }
@@ -161,13 +160,13 @@ class VideoDAO extends BaseDAO
         $query = "UPDATE videos 
             SET deleted_at = NOW(), updated_at = NOW()
             WHERE id = ?";
-        
+
         $result = $this->executeStatement($query, [$id]);
-        
+
         if ($result) {
             $this->insertAuditLog($id, 'delete', null, null, null);
         }
-        
+
         return is_bool($result) ? $result : false;
     }
 
@@ -181,18 +180,18 @@ class VideoDAO extends BaseDAO
      * @return bool
      */
     private function insertAuditLog(
-        int $videoId, 
-        string $action, 
-        ?string $userId = null, 
-        ?string $ipAddress = null, 
+        int $videoId,
+        string $action,
+        ?string $userId = null,
+        ?string $ipAddress = null,
         ?array $details = null
     ): bool {
         $query = "INSERT INTO video_audit_log (
                 video_id, action, user_id, ip_address, details, created_at
             ) VALUES (?, ?, ?, ?, ?, NOW())";
-        
+
         $detailsJson = $details ? json_encode($details) : null;
-        
+
         try {
             $result = $this->executeStatement($query, [
                 $videoId, $action, $userId, $ipAddress, $detailsJson

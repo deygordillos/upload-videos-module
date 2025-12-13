@@ -17,15 +17,21 @@ class BaseClass extends BaseComponent
      * @var string Operación SOAP actual
      */
     protected string $operation = '';
-    
+
     /**
      * @var array Estructura de respuesta SOAP
      */
     protected array $response = [];
 
     // Métodos específicos de BLL
-    protected function setOperation(string $operation): void { $this->operation = $operation; }
-    public function getOperation(): string { return $this->operation; }
+    protected function setOperation(string $operation): void
+    {
+        $this->operation = $operation;
+    }
+    public function getOperation(): string
+    {
+        return $this->operation;
+    }
 
     protected function setBuildResponse(array $xmlResponse = []): array
     {
@@ -64,10 +70,11 @@ class BaseClass extends BaseComponent
      *    'Name'  => 'Value'
      * ]
      */
-    public function requestEndpoint1($soapUrl = '', $headerProperties = [], $propertiesValues = []) {
+    public function requestEndpoint1($soapUrl = '', $headerProperties = [], $propertiesValues = [])
+    {
         $operation = $headerProperties['Operation'] ?? 'unknown';
-        
-        $return = new \stdClass;
+
+        $return = new \stdClass();
         $return->errno = 1;
         $return->error = 'Not executed';
         $return->httpcode = 500;
@@ -75,7 +82,7 @@ class BaseClass extends BaseComponent
         $return->response = '';
         $return->time = 0;
         try {
-            $this->log->writeLog("{$this->tx} ". __FUNCTION__ ." url: {$soapUrl} header: " . json_encode($headerProperties) . " properties: " . json_encode($propertiesValues) . "\n");
+            $this->log->writeLog("{$this->tx} " . __FUNCTION__ . " url: {$soapUrl} header: " . json_encode($headerProperties) . " properties: " . json_encode($propertiesValues) . "\n");
             $idUser     = $headerProperties['idUser'] ?? '';
             $latitude   = $headerProperties['Latitude'] ?? '';
             $longitude  = $headerProperties['Longitude'] ?? '';
@@ -83,10 +90,9 @@ class BaseClass extends BaseComponent
             $requestData = '';
             foreach ($propertiesValues as $field => $value) {
                 $requestData .= '<Property xsi:type="urn:Property">
-                    <Name xsi:type="xsd:string">'.$field.'</Name>
-                    <Value xsi:type="xsd:string">'.$value.'</Value>
+                    <Name xsi:type="xsd:string">' . $field . '</Name>
+                    <Value xsi:type="xsd:string">' . $value . '</Value>
                 </Property>';
-                
             }
 
             $xml_post_string = '<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:Demo">
@@ -98,16 +104,16 @@ class BaseClass extends BaseComponent
                                 <Company xsi:type="xsd:string"></Company>
                                 <Login xsi:type="xsd:string"></Login>
                                 <PasswordHash xsi:type="xsd:string"></PasswordHash>
-                                <DateTime xsi:type="xsd:string">'.date('c').'</DateTime>
-                                <Operation xsi:type="xsd:string">'.$operation.'</Operation>
+                                <DateTime xsi:type="xsd:string">' . date('c') . '</DateTime>
+                                <Operation xsi:type="xsd:string">' . $operation . '</Operation>
                                 <Destination xsi:type="xsd:string"></Destination>
                                 <Id xsi:type="xsd:int"></Id>
-                                <idUser xsi:type="xsd:int">'.$idUser.'</idUser>
-                                <Latitude xsi:type="xsd:string">'.$latitude.'</Latitude>
-                                <Longitude xsi:type="xsd:string">'.$longitude.'</Longitude>
+                                <idUser xsi:type="xsd:int">' . $idUser . '</idUser>
+                                <Latitude xsi:type="xsd:string">' . $latitude . '</Latitude>
+                                <Longitude xsi:type="xsd:string">' . $longitude . '</Longitude>
                             </Header>
                             <Data xsi:type="urn:DataRequest">
-                                '.$requestData.'
+                                ' . $requestData . '
                             </Data>
                         </OperationRequest>
                     </urn:OutputRequest>
@@ -135,8 +141,8 @@ class BaseClass extends BaseComponent
             $initm    = microtime(true);
             $response = curl_exec($ch);
             $endtm    = microtime(true);
-            $this->log->writeLog("{$this->tx} SOAP ".$operation." time: " . print_r($endtm - $initm, true) . "\n");
-            $return = new \stdClass;
+            $this->log->writeLog("{$this->tx} SOAP " . $operation . " time: " . print_r($endtm - $initm, true) . "\n");
+            $return = new \stdClass();
             $return->errno = curl_errno($ch);
             $return->error = curl_error($ch);
             $return->httpcode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
@@ -155,7 +161,7 @@ class BaseClass extends BaseComponent
             unset($response, $xml_post_string);
             curl_close($ch);
         } catch (\Throwable $th) {
-            $this->log->writeLog("{$this->tx} SOAP ".$operation." Error: " . print_r($th->getMessage(), true) . "\n");
+            $this->log->writeLog("{$this->tx} SOAP " . $operation . " Error: " . print_r($th->getMessage(), true) . "\n");
         }
         return $return;
     }

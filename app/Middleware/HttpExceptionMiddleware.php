@@ -22,10 +22,9 @@ final class HttpExceptionMiddleware implements MiddlewareInterface
     }
 
     public function process(
-        ServerRequestInterface $request, 
+        ServerRequestInterface $request,
         RequestHandlerInterface $handler
-    ): ResponseInterface
-    {
+    ): ResponseInterface {
         try {
             return $handler->handle($request);
         } catch (HttpException $httpException) {

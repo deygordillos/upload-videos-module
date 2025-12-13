@@ -14,7 +14,7 @@ use Libraries\DayLog;
 /**
  * Video Business Logic Layer
  * Handles video upload, validation, storage and metadata management
- * 
+ *
  * @version 1.0.0
  * @author SimpleData Corp
  */
@@ -30,7 +30,7 @@ class VideoBLL extends \App\BaseClass
         parent::__construct($db);
         $this->dao = new VideoDAO($db);
         $this->uploadBasePath = rtrim($uploadBasePath, '/\\');
-        
+
         // Create base upload directory if it doesn't exist
         if (!is_dir($this->uploadBasePath)) {
             mkdir($this->uploadBasePath, 0755, true);
@@ -46,20 +46,20 @@ class VideoBLL extends \App\BaseClass
     {
         try {
             $this->log->writeLog("{$this->tx} [video_bll] Starting video upload process\n");
-            
+
             // Generate unique identifier if not provided
             $videoIdentifier = $videoDTO->videoIdentifier ?? $this->generateVideoIdentifier();
             $this->log->writeLog("{$this->tx} [video_bll] Video identifier: {$videoIdentifier}\n");
-            
+
             // Validate video file
             $this->validateVideoFile($videoDTO);
-            
+
             // Check for duplicate
             $existing = $this->dao->findByProjectAndIdentifier(
-                $videoDTO->projectId, 
+                $videoDTO->projectId,
                 $videoIdentifier
             );
-            
+
             if ($existing !== null) {
                 $this->log->writeLog("{$this->tx} [video_bll] Duplicate video found: {$videoIdentifier}\n");
                 return ApiResponseDTO::error(
@@ -68,26 +68,26 @@ class VideoBLL extends \App\BaseClass
                     ['existing_video_id' => $existing->id]
                 );
             }
-            
+
             // Generate storage path
             $storagePath = $this->generateStoragePath(
                 $videoDTO->projectId,
                 $videoIdentifier,
                 $videoDTO->originalFilename
             );
-            
+
             // Create directory structure
             $this->createDirectoryStructure(dirname($storagePath));
-            
+
             // Move uploaded file to final destination
             if (!$this->moveUploadedFile($videoDTO->tmpFilePath, $storagePath)) {
                 $this->log->writeLog("{$this->tx} [video_bll_error] Failed to move uploaded file\n");
                 return ApiResponseDTO::error('Failed to store video file', 500);
             }
-            
+
             // Get relative path for database storage
             $relativePath = $this->getRelativePath($storagePath);
-            
+
             // Create updated DTO with generated identifier
             $updatedDTO = new VideoUploadDTO(
                 projectId: $videoDTO->projectId,
@@ -100,32 +100,31 @@ class VideoBLL extends \App\BaseClass
                 userAgent: $videoDTO->userAgent,
                 metadata: $videoDTO->metadata
             );
-            
+
             // Insert record in database
             $videoId = $this->dao->insert($updatedDTO, $relativePath);
-            
+
             if ($videoId === null) {
                 // Rollback: delete uploaded file
                 @unlink($storagePath);
                 $this->log->writeLog("{$this->tx} [video_bll_error] Failed to insert video record\n");
                 return ApiResponseDTO::error('Failed to store video metadata', 500);
             }
-            
+
             // Retrieve complete video record
             $video = $this->dao->findById($videoId);
-            
+
             if ($video === null) {
                 return ApiResponseDTO::error('Video uploaded but unable to retrieve record', 500);
             }
-            
+
             $this->log->writeLog("{$this->tx} [video_bll] Video uploaded successfully: ID={$videoId}\n");
-            
+
             return ApiResponseDTO::success(
                 $video->toArray(),
                 'Video uploaded successfully',
                 201
             );
-            
         } catch (\InvalidArgumentException $e) {
             $this->log->writeLog("{$this->tx} [video_bll_error] Validation error: " . $e->getMessage() . "\n");
             return ApiResponseDTO::error($e->getMessage(), 400);
@@ -147,13 +146,12 @@ class VideoBLL extends \App\BaseClass
     {
         try {
             $video = $this->dao->findById($id);
-            
+
             if ($video === null) {
                 return ApiResponseDTO::error('Video not found', 404);
             }
-            
+
             return ApiResponseDTO::success($video->toArray());
-            
         } catch (\Throwable $e) {
             $this->log->writeLog("{$this->tx} [video_bll_error] Get video error: " . $e->getMessage() . "\n");
             return ApiResponseDTO::error('Failed to retrieve video', 500);
@@ -174,16 +172,16 @@ class VideoBLL extends \App\BaseClass
             if (!preg_match('/^[a-zA-Z0-9_-]+$/', $projectId)) {
                 return ApiResponseDTO::error('Invalid project ID format', 400);
             }
-            
+
             // Validate pagination parameters
             $page = max(1, $page);
             $perPage = min(100, max(1, $perPage));
             $offset = ($page - 1) * $perPage;
-            
+
             $videos = $this->dao->findByProject($projectId, $perPage, $offset);
-            
+
             $videoData = array_map(fn($video) => $video->toArray(), $videos);
-            
+
             return ApiResponseDTO::success([
                 'videos' => $videoData,
                 'pagination' => [
@@ -192,7 +190,6 @@ class VideoBLL extends \App\BaseClass
                     'count' => count($videoData)
                 ]
             ]);
-            
         } catch (\Throwable $e) {
             $this->log->writeLog("{$this->tx} [video_bll_error] Get videos error: " . $e->getMessage() . "\n");
             return ApiResponseDTO::error('Failed to retrieve videos', 500);
@@ -208,26 +205,25 @@ class VideoBLL extends \App\BaseClass
     {
         try {
             $video = $this->dao->findById($id);
-            
+
             if ($video === null) {
                 return ApiResponseDTO::error('Video not found', 404);
             }
-            
+
             // Soft delete in database
             $result = $this->dao->softDelete($id);
-            
+
             if (!$result) {
                 return ApiResponseDTO::error('Failed to delete video', 500);
             }
-            
+
             // Optionally delete physical file (commented out for safety)
             // $fullPath = $this->uploadBasePath . '/' . $video->filePath;
             // @unlink($fullPath);
-            
+
             $this->log->writeLog("{$this->tx} [video_bll] Video deleted successfully: ID={$id}\n");
-            
+
             return ApiResponseDTO::success(null, 'Video deleted successfully');
-            
         } catch (\Throwable $e) {
             $this->log->writeLog("{$this->tx} [video_bll_error] Delete video error: " . $e->getMessage() . "\n");
             return ApiResponseDTO::error('Failed to delete video', 500);
@@ -290,10 +286,10 @@ class VideoBLL extends \App\BaseClass
         $year = $date->format('Y');
         $month = $date->format('m');
         $day = $date->format('d');
-        
+
         // Sanitize filename
         $safeFilename = $this->sanitizeFilename($filename);
-        
+
         // Build path: project/year/month/day/videoIdentifier_filename
         return sprintf(
             '%s/%s/%s/%s/%s/%s_%s',
@@ -316,15 +312,15 @@ class VideoBLL extends \App\BaseClass
     {
         // Remove any path components
         $filename = basename($filename);
-        
+
         // Remove any non-alphanumeric characters except dots, hyphens, and underscores
         $filename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $filename);
-        
+
         // Ensure filename is not empty
         if (empty($filename)) {
             $filename = 'video_' . uniqid() . '.mp4';
         }
-        
+
         return $filename;
     }
 
@@ -354,7 +350,7 @@ class VideoBLL extends \App\BaseClass
         if (is_uploaded_file($source)) {
             return move_uploaded_file($source, $destination);
         }
-        
+
         // Fallback to rename for testing purposes
         return rename($source, $destination);
     }
@@ -368,11 +364,11 @@ class VideoBLL extends \App\BaseClass
     {
         $basePath = realpath($this->uploadBasePath);
         $filePath = realpath($fullPath);
-        
+
         if ($filePath && $basePath && str_starts_with($filePath, $basePath)) {
             return str_replace($basePath . DIRECTORY_SEPARATOR, '', $filePath);
         }
-        
+
         return $fullPath;
     }
 }
