@@ -96,7 +96,17 @@ class VideoRoutes
 
                 $videoFile = $uploadedFiles['video'];
                 if ($videoFile->getError() !== UPLOAD_ERR_OK) {
-                    $result = ApiResponseDTO::error('File upload error: ' . $videoFile->getError(), 400);
+                    $errorMessages = [
+                        UPLOAD_ERR_INI_SIZE => 'File exceeds upload_max_filesize (' . ini_get('upload_max_filesize') . ') or post_max_size (' . ini_get('post_max_size') . '). Check client_max_body_size too.',
+                        UPLOAD_ERR_FORM_SIZE => 'File exceeds MAX_FILE_SIZE directive in HTML form',
+                        UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
+                        UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+                        UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
+                        UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+                        UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload',
+                    ];
+                    $errorMsg = $errorMessages[$videoFile->getError()] ?? 'Unknown upload error code: ' . $videoFile->getError();
+                    $result = ApiResponseDTO::error($errorMsg, 400);
                     $response->getBody()->write(json_encode($result->toArray()));
                     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
                 }
