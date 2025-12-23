@@ -70,7 +70,7 @@ $app->add(function (Request $request, RequestHandlerInterface $handler): Respons
 
     $response = $response->withHeader('Access-Control-Allow-Origin', '*');
     $response = $response->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-    $response = $response->withHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    $response = $response->withHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, X-API-Key');
 
     // Optional: Allow Ajax CORS requests with Authorization header
     // $response = $response->withHeader('Access-Control-Allow-Credentials', 'true');

@@ -65,6 +65,11 @@ class VideoAuthMiddleware implements MiddlewareInterface
         $apiKey = $this->getApiKeyFromRequest($request);
 
         if (empty($apiKey)) {
+            // Log all headers for debugging
+            $allHeaders = $request->getHeaders();
+            $headerNames = array_keys($allHeaders);
+            $this->log->writeLog("{$tx} [auth_debug] Available headers: " . implode(', ', $headerNames) . "\n");
+            
             $this->log->writeLog("{$tx} [auth] Missing API key\n");
             return $this->unauthorizedResponse('API key is required', 401);
         }
@@ -100,10 +105,22 @@ class VideoAuthMiddleware implements MiddlewareInterface
      */
     private function getApiKeyFromRequest(Request $request): ?string
     {
-        // Check X-API-Key header
+        // Check X-API-Key header (case-insensitive)
         $headers = $request->getHeaders();
-        if (isset($headers['X-API-Key'][0])) {
-            return trim($headers['X-API-Key'][0]);
+        
+        // Try multiple header name variations
+        $apiKeyHeaders = ['X-API-Key', 'X-Api-Key', 'x-api-key', 'HTTP_X_API_KEY'];
+        
+        foreach ($apiKeyHeaders as $headerName) {
+            if (isset($headers[$headerName][0])) {
+                return trim($headers[$headerName][0]);
+            }
+        }
+        
+        // Try getHeaderLine which is case-insensitive
+        $apiKey = $request->getHeaderLine('X-API-Key');
+        if (!empty($apiKey)) {
+            return trim($apiKey);
         }
 
         // Check Authorization Bearer token
